@@ -127,7 +127,7 @@ Then, I started tuning lattice, but it failed. And I tried to apply another idea
 
 After that, I changed mind. I assume that these strategy does not work cause some high degree terms (`x^2,x*y` etc.) are included. So I determined to apply another method: **Coppersmith method**.
 
-Coppersmith method is general framework for solving a polynomial equation over integer, mod `n` (not on finite field), and mod `p` for unknown modulus `p|n`. On Sagemath, [small_roots](https://doc.sagemath.org/html/en/reference/polynomial_rings/sage/rings/polynomial/polynomial_modn_dense_ntl.html#sage.rings.polynomial.polynomial_modn_dense_ntl.small_roots) method is implemented, but it only works for 1 variable polynomial. But we have [alternative experimental extention](https://github.com/defund/coppersmith) by @defund. Then, I wrote just like the following code. (I clean up after ctf, but the essence is same.)
+Coppersmith method is general framework for solving a polynomial equation over integer, mod `n` (not on finite field), and mod `p` for unknown modulus `p|n`. On Sagemath, [small_roots](https://doc.sagemath.org/html/en/reference/polynomial_rings/sage/rings/polynomial/polynomial_modn_dense_ntl.html#sage.rings.polynomial.polynomial_modn_dense_ntl.small_roots) method is implemented, but it only works for 1 variable polynomial. But we have [alternative experimental extension](https://github.com/defund/coppersmith) by @defund. Then, I wrote just like the following code. (I clean up after ctf, but the essence is same.)
 
 ```python
 from sage.all import *
@@ -157,7 +157,7 @@ def solve(u1, Ludown, u2, L2udown, n):
     return ans
 ```
 
-I run the code and it outputted some result within few seconds. But it did not pass answer checking for some reason. I manipulated small_roots parameters, but it did not change the status. And i added some small bruteforcing for most significant digits for `x, y`, but did not... What can I do?
+I run the code and it outputted some result within few seconds. But it did not pass answer checking for some reason. I manipulated small_roots parameters, but it did not change the status. And i added some small bruteforce for most significant digits for `x, y`, but did not... What can I do?
 
 After CTF ended, I saw the [writeup](https://blog.maple3142.net/2023/01/16/idekCTF-2022-writeups/#chronophobia) by @maple3142. I astonished and depressed, cause **the method is almost same** except for using another alternative Coppersmith extension [lattice-based-cryptanalysis](https://github.com/josephsurin/lattice-based-cryptanalysis) by @joseph instead of defund one. And his code includes the comment:
 
@@ -175,7 +175,7 @@ Note: The intended solution is to use hidden number problem with some manipulati
 
 ## Introduction to Coppersmith Method
 
-Then, I review Coppersmith method. Recently, sophiscated overview has published: [A Gentle Tutorial for Lattice-Based Cryptanalysis](https://eprint.iacr.org/2023/032.pdf). So I skip basics of lattice except citing the following theorem.
+Then, I review Coppersmith method. Recently, sophisticated overview has published: [A Gentle Tutorial for Lattice-Based Cryptanalysis](https://eprint.iacr.org/2023/032.pdf). So I skip basics of lattice except citing the following theorem.
 
 ### **Theorem** [LLL: Lenstra, Lenstra, Lovasz]
 
@@ -201,7 +201,7 @@ $$
 x^2 -35660676653358573538*x-1006707748483862406125449872514995205080 = 0
 $$
 
-If the solution `x0` is small, we can assume that the modulus solution `x0` can be find by just solving over integer. (The modulus equation can be reduced to infinitely integer equations $=0,=\pm{N},\pm{2*N},\ldots$, but $=0$ is only case if `x0` is small enough.) Solving modulus equation is hard, but solving interger equation is easy. In fact, Sagemath solve it in seconds.
+If the solution `x0` is small, we can assume that the modulus solution `x0` can be find by just solving over integer. (The modulus equation can be reduced to infinitely integer equations $=0,=\pm{N},\pm{2*N},\ldots$, but $=0$ is only case if `x0` is small enough.) Solving modulus equation is hard, but solving integer equation is easy. In fact, Sagemath solve it in seconds.
 
 ```python
 sage: P=PolynomialRing(ZZ, 'x') 
@@ -211,7 +211,7 @@ sage: f.roots()
 [(54225787401085700998, 1), (-18565110747727127460, 1)] 
 ```
 
-This is the essence of Coppersmith method: reducing modulus equation to *small* interger equation.
+This is the essence of Coppersmith method: reducing modulus equation to *small* integer equation.
 
 Let's state Howgrave-Graham theorem. First, let $h(x_1,x_2,\ldots,x_n) = \sum_{(i_1,i_2,\ldots,i_n)}h_{i_1,i_2,\ldots,i_n}{x_1}^{i_1} \cdot {x_2}^{i_2} \cdots {x_n}^{i_n} \in \mathbb{Z}[x_1,x_2,\ldots,x_n]$. And $X_1,X_2,\ldots,X_n \in \mathbb{Z}_{>0}$. Then, we define
 $$
@@ -241,7 +241,7 @@ The last inequality follows from Cauchy-Schwaltz inequality. $\blacksquare$
 
 ### **Note**
 
-On the proof of above, we uses Cauchy-Schwaltz for obtaining the condition about ${||\cdot||}_2$ (L2-norm). But, obviously, it is safficient to check the condition ${||h(x_1X_1,\ldots,x_nX_n)||}_1 := \sum_{(i_1,i_2,\ldots,i_n)}  |h_{i_1,i_2,\ldots,i_n}{X_1}^{i_1} \cdot {X_2}^{i_2} \cdots {X_n}^{i_n}| < N$. We will use the L1-norm condition for checking obtaining polynomials are good or not. $\blacksquare$
+On the proof of above, we uses Cauchy-Schwaltz for obtaining the condition about ${||\cdot||}_2$ (L2-norm). But, obviously, it is sufficient to check the condition ${||h(x_1X_1,\ldots,x_nX_n)||}_1 := \sum_{(i_1,i_2,\ldots,i_n)}  |h_{i_1,i_2,\ldots,i_n}{X_1}^{i_1} \cdot {X_2}^{i_2} \cdots {X_n}^{i_n}| < N$. We will use the L1-norm condition for checking obtaining polynomials are good or not. $\blacksquare$
 
 Then, if we want to find a solution $(r_1,\ldots,r_n) \in {\mathbb{Z}}^n$ for $f(x_1,\ldots,x_n) = 0 \pmod{N}$ given $|r_1|<X_1,\ldots,|r_n|<X_n$, we do the following:
 
@@ -268,7 +268,7 @@ So we should choose good shift polynomials and tweak some modification for each 
 ## Univariate case
 
 The paper [Finding Small Solutions to Small Degree
-Polynomials, D. Copppersmith, 2001](https://link.springer.com/chapter/10.1007/3-540-44670-2_3) states the following:
+Polynomials, D. Coppersmith, 2001](https://link.springer.com/chapter/10.1007/3-540-44670-2_3) states the following:
 
 ### **Theorem** [Coppersmith]
 
@@ -302,10 +302,10 @@ Each row vector corresponds to:
 - $x^j * {f(x)}^{t-i} * N^i\ (i=1,\ldots,t,\ j=\delta-1,\ldots,0)$
 
 These polynomials satisfy $=0 \pmod{b^t}$ with substituting $x=r$. You can see $\dim{L}=t*\delta+u$ and $\det{L} = N^{\delta*t*(t+1)/2}*X^{(t*\delta+u-1)*(t*\delta+u)/2}$. We maximize $X$ on $u$ as ${\det{L}}^{1/\dim{L}} < N^{t*\beta}$, then $t*\delta+u\simeq (t+1)/\beta$ (actually, exact optimized value is a bit smaller) and $\max{X}\simeq N^{(\beta^2*t)/((t+1)*\delta-\beta)}$.
-On the other hand, by using LLL, we can obtain small vector $v_1$ such that $||v_1|| \le 2^{\frac{\dim{L}-1}{4}}\cdot {\det{L}}^{1/\dim{L}}$. So we expect we can find a good polynomial by LLL with above lattice if around $X < 1/2*N^{\beta^2/\delta}$. For detailed dscussion about constant multiplication, see [New RSA Vulnerabilities Using
+On the other hand, by using LLL, we can obtain small vector $v_1$ such that $||v_1|| \le 2^{\frac{\dim{L}-1}{4}}\cdot {\det{L}}^{1/\dim{L}}$. So we expect we can find a good polynomial by LLL with above lattice if around $X < 1/2*N^{\beta^2/\delta}$. For detailed discussion about constant multiplication, see [New RSA Vulnerabilities Using
 Lattice Reduction Methods, Thesis, A. May](https://d-nb.info/972386416/34). Note that you do not forget to take into account for the factor $\sqrt{\dim{L}}$ for Howgrave-Graham bound. $\blacksquare$
 
-Above theorem is theoretically clean, but we sometimes need parameter tuning for applying the theorem in practice. You know, especially $\epsilon$ is problematic if we use the above method as "magic" black box. I experienced $\beta=0.5$ did not work. (For severe condition, we should set more sophiscated parameter setting such as $\beta=0.499$.) Why we need for parmeter tuning? This is because it involves asymptotic behavior. On the above proof, I states $\max X\simeq N^{(\beta^2*t)/((t+1)*\delta-\beta)}$, if $t\rightarrow \infty$, then $\max{X}\simeq N^{\beta^2/\delta}$. And approximation and inequality discussion is involved for the proof, it goes worse. So we try to avoid parameter tuning.
+Above theorem is theoretically clean, but we sometimes need parameter tuning for applying the theorem in practice. You know, especially $\epsilon$ is problematic if we use the above method as "magic" black box. I experienced $\beta=0.5$ did not work. (For severe condition, we should set more sophisticated parameter setting such as $\beta=0.499$.) Why we need for parameter tuning? This is because it involves asymptotic behavior. On the above proof, I states $\max X\simeq N^{(\beta^2*t)/((t+1)*\delta-\beta)}$, if $t\rightarrow \infty$, then $\max{X}\simeq N^{\beta^2/\delta}$. And approximation and inequality discussion is involved for the proof, it goes worse. So we try to avoid parameter tuning.
 
 For practice, we only have to construct lattice with specifically determined shift polynomials. Even if first choice of $u, t$ are wrong, we can improve lattice quality just go up these parameters. When $u$ goes up, $\det{L}^{1/\dim{L}}$ is decreasing, so we expect solution will find. Also, $t$ goes up, we improve estimation of $\max{X}$. And we can check whether found polynomial is good or not with L1 norm Howgrave-Graham condition. These leads the following algorithm.
 
@@ -653,7 +653,7 @@ Finding roots over integer is not easy. For one variable polynomial, you only ha
 2. solve_root_hensel
 - algebraic method (find all roots, slow)
 - find root mod small p and update to mod large modulus
-- possibly, canntot compute a root (too many candidates on modulus even if only a few roots over integer)
+- possibly, cannot compute a root (too many candidates on modulus even if only a few roots over integer)
 3. solve_root_triangulate
 - algebraic method (find all roots, slow)
 - compute Groebner basis and then find solution by solve function
