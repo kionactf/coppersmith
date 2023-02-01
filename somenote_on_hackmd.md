@@ -2,7 +2,7 @@
 
 [toc]
 
-## What I learned
+## What I Learned
 
 - It would be better trying many things, instead of detailed analysis, on CTF
 - Simple strategy is good, but tuning parameters not good. Applying past genius works is definitely better.
@@ -18,97 +18,97 @@ import signal
 
 class PoW():
 
-	def __init__(self, kbits, L):
+    def __init__(self, kbits, L):
 
-		self.kbits = kbits
-		self.L = L
+        self.kbits = kbits
+        self.L = L
 
-		self.banner()
-		self.gen()
-		self.loop(1337)
+        self.banner()
+        self.gen()
+        self.loop(1337)
 
-	def banner(self):
+    def banner(self):
 
-		print("===================================")
-		print("=== Welcome to idek PoW Service ===")
-		print("===================================")
-		print("")
+        print("===================================")
+        print("=== Welcome to idek PoW Service ===")
+        print("===================================")
+        print("")
 
-	def menu(self):
+    def menu(self):
 
-		print("")
-		print("[1] Broken Oracle")
-		print("[2] Verify")
-		print("[3] Exit")
-		
-		op = int(input(">>> "))
-		return op
+        print("")
+        print("[1] Broken Oracle")
+        print("[2] Verify")
+        print("[3] Exit")
+        
+        op = int(input(">>> "))
+        return op
 
-	def loop(self, n):
+    def loop(self, n):
 
-		for _ in range(n):
+        for _ in range(n):
 
-			op = self.menu()
-			if op == 1:
-				self.broken_oracle()			
-			elif op == 2:
-				self.verify()
-			elif op == 3:
-				print("Bye!")
-				break
+            op = self.menu()
+            if op == 1:
+                self.broken_oracle()            
+            elif op == 2:
+                self.verify()
+            elif op == 3:
+                print("Bye!")
+                break
 
-	def gen(self):
+    def gen(self):
 
-		self.p = getPrime(self.kbits)
-		self.q = getPrime(self.kbits)
-		
-		self.n = self.p * self.q
-		self.phi = (self.p - 1) * (self.q - 1)
+        self.p = getPrime(self.kbits)
+        self.q = getPrime(self.kbits)
+        
+        self.n = self.p * self.q
+        self.phi = (self.p - 1) * (self.q - 1)
 
-		t = random.randint(0, self.n-1)
-		print(f"Here is your random token: {t}")
-		print(f"The public modulus is: {self.n}")
+        t = random.randint(0, self.n-1)
+        print(f"Here is your random token: {t}")
+        print(f"The public modulus is: {self.n}")
 
-		self.d = random.randint(128, 256)
-		print(f"Do 2^{self.d} times exponentiation to get the valid ticket t^(2^(2^{self.d})) % n!")
+        self.d = random.randint(128, 256)
+        print(f"Do 2^{self.d} times exponentiation to get the valid ticket t^(2^(2^{self.d})) % n!")
 
-		self.r = pow(2, 1 << self.d, self.phi)
-		self.ans = pow(t, self.r, self.n)
+        self.r = pow(2, 1 << self.d, self.phi)
+        self.ans = pow(t, self.r, self.n)
 
-		return
+        return
 
-	def broken_oracle(self):
+    def broken_oracle(self):
 
-		u = int(input("Tell me the token. "))
-		ans = pow(u, self.r, self.n)
-		inp = int(input("What is your calculation? "))
-		if ans == inp:
-			print("Your are correct!")
-		else:
-			print(f"Nope, the ans is {str(ans)[:self.L]}... ({len(str(ans)[self.L:])} remain digits)")
+        u = int(input("Tell me the token. "))
+        ans = pow(u, self.r, self.n)
+        inp = int(input("What is your calculation? "))
+        if ans == inp:
+            print("Your are correct!")
+        else:
+            print(f"Nope, the ans is {str(ans)[:self.L]}... ({len(str(ans)[self.L:])} remain digits)")
 
-		return
+        return
 
-	def verify(self):
+    def verify(self):
 
-		inp = int(input(f"Give me the ticket. "))		
+        inp = int(input(f"Give me the ticket. "))        
        
-		if inp == self.ans:
-			print("Good :>")
-			with open("flag.txt", "rb") as f:
-				print(f.read())
-		else:
-			print("Nope :<")
+        if inp == self.ans:
+            print("Good :>")
+            with open("flag.txt", "rb") as f:
+                print(f.read())
+        else:
+            print("Nope :<")
 
 if __name__ == '__main__':
 
-	signal.alarm(120)
-	service = PoW(512, 200)
+    signal.alarm(120)
+    service = PoW(512, 200)
 ```
 
 We are given token `t`, exponent `d`, and modulus `n=p*q`. The goal is to find `t^r % n` for `r=2^(2^d) % phi(n)` within 2 minutes. The assumption of Wesolowski's verifiable delay function([Efficient verifiable delay functions](https://eprint.iacr.org/2018/623.pdf)) is that this type of computation is slow if factorization of `n` is unknown. So the author may add an extra interface. We are given weird oracle "broken_oracle", which outputs most significant `L` digits for `u^r % n` given user input `u`.
 
-## Our strategy on CTF
+## Our Strategy on CTF
 
 I saw the challenge after having nice progress by @soon_haari. His idea is:
 
@@ -177,7 +177,7 @@ Note: The intended solution is to use hidden number problem with some manipulati
 
 Then, I review Coppersmith method. Recently, sophiscated overview has published: [A Gentle Tutorial for Lattice-Based Cryptanalysis](https://eprint.iacr.org/2023/032.pdf). So I skip basics of lattice except citing the following theorem.
 
-### theorem[LLL: Lenstra, Lenstra, Lovasz]
+### **Theorem** [LLL: Lenstra, Lenstra, Lovasz]
 
 Let $L$ be an integer lattice of $\dim{L}=\omega$. The LLL algorithm outputs a reduced basis spanned by $\{v_1,\ldots,v_{\omega}\}$ with
 $$
@@ -270,7 +270,7 @@ So we should choose good shift polynomials and tweak some modification for each 
 The paper [Finding Small Solutions to Small Degree
 Polynomials, D. Copppersmith, 2001](https://link.springer.com/chapter/10.1007/3-540-44670-2_3) states the following:
 
-### theorem[Coppersmith]
+### **Theorem** [Coppersmith]
 
 Let $N$ is a (large) positive integer, which has a divisor $b\ge {N}^\beta, 0 < \beta \le 1$. Let $f(x)$ be a univariate polynomial of degree $\delta$, where the leading coefficient $f$ is invertible over $\pmod{N}$. And let $0 < X$ for an expected bound for a root of $f(x)$. Then, we can find a solution $r$ of the equation
 $$
@@ -278,21 +278,21 @@ f(r) = 0 \pmod{b}\ (r < X)
 $$,
 if around $X < 1/2*{N}^{\beta^2/\delta}$.
 
-### proof
+### **Proof**
 
 The leading coefficient of $f(x)$ is invertible, we can assume $f(x)$ is monic by multiplying inverse of leading coefficient of $f(X)$ over $\pmod{N}$.
 Write $f(x)=x^\delta + f_{\delta-1}*x^{\delta-1}+\cdots+f_0$. Let $t,u$ are some non-negative integers (tuned later).
 Let consider the following lattice $L$ (row vectors):
 $$
 \begin{pmatrix}
-	X^{t*\delta+u-1} & * & \ldots & \ldots &\ldots & \ldots & *  \\
+    X^{t*\delta+u-1} & * & \ldots & \ldots &\ldots & \ldots & *  \\
     0 & X^{t*\delta+u-2} & * & \ldots & \ldots & \ldots & *\\
-	\vdots & \vdots & \ddots
-	 & \vdots & \vdots & \vdots & \vdots\\
+    \vdots & \vdots & \ddots
+     & \vdots & \vdots & \vdots & \vdots\\
     0 & 0 & 0 & X^{t*\delta} & * & \ldots & *\\
-	0 & 0 & 0 & 0 &N*X^{t*\delta-1} & \ldots & *\\
-	\vdots & \vdots & \vdots & \vdots & \vdots & \ddots & \vdots \\
-	0 & 0 & 0 & 0 & 0 & \ldots & N^t\\
+    0 & 0 & 0 & 0 &N*X^{t*\delta-1} & \ldots & *\\
+    \vdots & \vdots & \vdots & \vdots & \vdots & \ddots & \vdots \\
+    0 & 0 & 0 & 0 & 0 & \ldots & N^t\\
 \end{pmatrix}
 $$
 
@@ -309,7 +309,7 @@ Above theorem is theoretically clean, but we sometimes need parameter tuning for
 
 For practice, we only have to construct lattice with specifically determined shift polynomials. Even if first choice of $u, t$ are wrong, we can improve lattice quality just go up these parameters. When $u$ goes up, $\det{L}^{1/\dim{L}}$ is decreasing, so we expect solution will find. Also, $t$ goes up, we improve estimation of $\max{X}$. And we can check whether found polynomial is good or not with L1 norm Howgrave-Graham condition. These leads the following algorithm.
 
-### Implementation: univariate case
+### Implementation: Univariate Case
 
 ```python
 from sage.all import *
@@ -406,7 +406,7 @@ Above algorithm, we need to input basepoly, bounds, $\beta$.  Choosing $\beta$ i
 
 I used to use $\beta=0.5, 0.499, \ldots$ for $N=p*q$ with same bitsize of $p,q$ in Sagemath small_roots input. In fact, for 2048bit $N$, the above choosing $\beta=0.4995$. Note that zncoppersmith function on Pari/GP expects input as $P$(basepoly over integer), $N$, $X$(bounds), $B=N^\beta$.
 
-## Herrmann-May method (multivariate linear version)
+## Herrmann-May Method (Multivariate Linear Version)
 
 An simple extension of the univariate case, we collect many shift polynomials and apply LLL. But it is just heuristic, then we may find solution or may not. This forces us to tune parameter without target, and we may fail to a rabbit hole. Sometimes we know this heuristic does not work and another heuristic works. I do not want to search "lucky" anymore.
 
@@ -415,7 +415,7 @@ Instead, we see well analyzed method for multivariate linear polynomial case.
 The paper [Solving Linear Equations Modulo Divisors:
 On Factoring Given Any Bits, M. Herrmann and A. May, 2008](https://link.springer.com/content/pdf/10.1007/978-3-540-89255-7_25.pdf) states the following:
 
-### theorem[Herrmann and May]
+### **Theorem** [Herrmann and May]
 
 Let $N$ is a (large) positive integer, which has a divisor $b\ge {N}^\beta, 0 < \beta \le 1$. Let $f(x_1,\ldots,x_n)$ be a linear multivariate polynomial, where the coefficient of $x_1$ for $f$ is invertible over $\pmod{N}$. And let $0 < X_1,\ldots, X_n$ for an expected bound for a root of $f(x_1,\ldots,x_n)$. Then, we can find a solution $r$ of the equation
 $$
@@ -423,7 +423,7 @@ f(r) = 0 \pmod{b}\ (r_i < X_i)
 $$,
 if around $\log_N{(X_1\ldots X_n)}\le 1-{(1-\beta)}^{\frac{n+1}{n}} - (n+1)*(1-{(1-\beta)}^{\frac{1}{n}})*(1-\beta)$.
 
-### proof
+### **Proof**
 
 The coefficient of $x_i$ for $f(x_1,\ldots,x_n)$ is invertible, we can assume the coefficient of $x_i$ for $f(x_1,\ldots,x_n)$ is $1$.
 Write $f(x_1,\ldots,x_n)=x_1 + f_{12}*x_2+\cdots+f_{1n}*x_n+f_{00}$. Let $t,m$ are some non-negative integers (tuned later). Then, consider shift polynomials $g_{(i_2,\ldots,i_n,k)}={x_2}^{i_2}\cdots {x_n}^{i_n} * f^k * N^{\max{\{t-k,\ 0\}}}$ with $\sum_{j=2}^n i_j \le m-k$. Then, we can construct the following lattice $L$.
@@ -443,19 +443,19 @@ Like univariate case, we expect we can find good $n$- polynomials by LLL with ab
 
 Then, we can implement multivariate linear case straightforward. Note that, on the above proof, it forces the coefficient of $x_1$ to $1$, but we can choose other term $x_2,\ldots,x_n$. So we use all "monic-ed" polynomials on $x_i$. The proposion gurantees this can be improved quality. I do not think this tweak improve much quality, but I add it for retaining symmetry. Note that this addition does not increase much complexity for LLL cause linear dependent vectors are transformed to zero vectors.
 
-### proposition
+### **Proposition**
 
 Let $v_1,\ldots,v_\omega$ as a $\omega$-dimensional basis for a lattice $L$, that is, $L$ is full lattice. Let $w_1,\ldots,w_{\omega'}$ as $\omega$-dimensional vectors and $L'$ is a lattice generated by $v_1,\ldots,v_\omega,w_1,\ldots,w_{\omega'}$.
 Then, $\dim{L'} = \dim{L} = \omega$ and $\det{L'} \le \det{L}$.
 
-### proof
+### **Proof**
 
 $L$ is full lattice and $L'$ includes $L$, so $\omega \ge \dim{L'} \ge \dim{L}=\omega$. Let $B_L$ as the basis matrix of $L$, and $B_{L'}$ as the basis matrix of $L'$. $L'$ includes $L$, then we have some integer matrix $A$ such that $B_L = A * B_{L'}$. So $\det{L}=|\det{B_L}|=|\det{A}|*|\det{B_{L'}}|=|\det{A}|*\det{L'}\ge \det{L'}$. $\blacksquare$
 
 It is important that assuming $L$ is full lattice. If $L$ is not full lattice, adding some vectors to $L$ may increase the determinant. (As an example, see the lattice $(1,0),(0,2)$ as $L'$ and $L$ as $(1,0)$.) In our case, involving monomial set does not change (so dimension is same) and the lattice related to $x_1$ is full lattice.
 
 
-### Implementation: multivariate linear case
+### Implementation: Multivariate Linear Case
 
 ```python
 from sage.all import *
@@ -554,7 +554,7 @@ def coppersmith_linear(basepoly, bounds, beta, maxmatsize=120, maxm=8):
     return None
 ```
 
-## More general case
+## More General Case
 
 A strategy for finding root on general case is proposed on [A Strategy for Finding Roots of Multivariate Polynomials with New Applications in Attacking RSA Variants, E. Jochemez and A. May, 2006](https://link.springer.com/content/pdf/10.1007/11935230_18.pdf). But this method does not assure we could obtain solution. I think general multivarite polynomial root finding is complicated. You might consider a polynomial $f(x,y,z)=a*x*y+b+y*z+c*x^2+d$, which involves some cross terms $x*y, y*z$. We want to reduce these terms case $X*Y, Y*Z$ mighit be larger, but it blows up the number of related monomials. It is hard to deal with large lattice. Also we do not know which monomial ordering should be choosed. (Which one should we choose for diagonal elements: $y*z$ and $x^2$ ?)
 
@@ -565,15 +565,15 @@ Or you can apply herrmann-may with linearization. If $X*Y, Y*Z, X*Z$ are reasona
 
 Then, I states just simple extention of univariate case/multivariate linear case for very restrictive bivariate case.
 
-### proposition
+### **Proposition**
 
-Let $N$ is a (large) positive integer, which has a divisor $b\ge {N}^\beta, 0 < \beta \le 1$. Let a polynomial $f(x,y)=f_{01}*x+f_{1\delta}*y^\delta+\ldots+f_{11}*y+f_{00}$ be a special form bivariate polynomial, where the coefficient of $x$ for $f$ is invertible over $\pmod{N}$. And let $0 < X,Y$ for an expected bound for a root of $f(x,y)$. Then, we can find a solution $r$ of the equation 
+Let $N$ is a (large) positive integer, which has a divisor $b\ge {N}^\beta, 0 < \beta \le 1$. Let a polynomial $f(x,y)=f_{01}*x+f_{1\delta}*y^\delta+\ldots+f_{11}*y+f_{00}$ be a special form bivariate polynomial, where the coefficient of $x$ for $f$ is invertible over $\pmod{N}$. And let $0 < X,Y$ for an expected bound for a root of $f(x,y)$. Then, we can find a solution $r$ of the equation
 $$
 f(r) = 0 \pmod{b}\ (r_1 < X, r_2 < Y)
 $$,
 if around $\log_N{X},\log_N{Y}\le \frac{(3*\beta-2)+{(1-\beta)}^{\frac{3}{2}}}{1+\delta}$.
 
-### proof
+### **Proof**
 
 The coefficient of $x$ for $f(x,y)$ is invertible, we can assume the coefficient of $x$ for $f(x,y)$ is $1$.
 Rewrite $f(x,y)=x+f_{1\delta}*y^\delta+\ldots+f_{11}*y+f_{00}$. Let $t,m$ are some non-negative integers (tuned later). Then, consider shift polynomials $g_{(i,k)}={y}^{i} * f^k * N^{\max{\{t-k,\ 0\}}}$ with $i \le \delta*(m-k)$. Then, we can construct the following lattice $L$.
@@ -589,7 +589,7 @@ Note that $n=2, \delta=1$ in above case is just $n=2$ for bivariate linear case.
 
 This type of lattices can be constructed for another polynomials. For example, it can be appplied to $f(x,y)=a_{20}*x^2+a_{11}*x*y+a_{02}*y^2+a_{10}*x+a_{01}*y+a_{00}$. In fact, the monomials $f^m$ are $\{x^i*y^j\ |\ i+j\le 2*m\}$. Even if this structure might always be applicable to other polynomials, we might expect some strategy for applying heuristic. We may start $t=1,2,\ldots$ and $m=t/\tau$ as large multiple values of $t$ respect to $\beta$. (For small $\beta$, $m$ should be large value.)
 
-## back to chronophobia
+## Back to chronophobia
 
 Then, I restate what we want to solve. Let $n=p*q$ be a 1024 bit integer. We have a oracle named broken_token, which leaks $L=200$ digits (about 664bits).
 For the sake of this oracle, we have known $L$-digits leaked $u1,u2$, and we need to solve the following equation:
@@ -600,7 +600,7 @@ $$,
 
 where `x,y` are small (<=10^Ludown, 10^Lu2down). ($Ludown, Lu2down \le 108$ digits or about 359 bits)
 
-As I just stated the proposition on general case section, we may ALMOST solve the equation. ($\beta=1.0, \log_N{Y},\log_N{X}<1024/3=341$) 
+As I just stated the proposition on general case section, we may ALMOST solve the equation. ($\beta=1.0, \log_N{Y},\log_N{X}<1024/3=341$)
 
 For extending the result, we consider the following equation ($a,b$ are known):
 
@@ -619,16 +619,16 @@ $$
 This shift polynomials have triangular form. If assuming $Y<1$, it leads $X < N^{5/13}\simeq 2^{393}$. Then, we relook defund coppersmith. It turns out that the paremter $m=2, d=3$ works! This is cause shift polynomials are chosen as the following. (The parameter $m$ is corresponding to our parameter $t=2$. For obtaining $x^2*f(x,y)$, we should set $d=2+1$.)
 
 ```python
-	for i in range(m+1):
-		base = N^(m-i) * f^i
-		for shifts in itertools.product(range(d), repeat=f.nvariables()):
-			g = base * prod(map(power, f.variables(), shifts))
-			G.append(g)
+    for i in range(m+1):
+        base = N^(m-i) * f^i
+        for shifts in itertools.product(range(d), repeat=f.nvariables()):
+            g = base * prod(map(power, f.variables(), shifts))
+            G.append(g)
 ```
 
-Though defund coppersmith can generate arbitrary shift polynomials, it may generate many useless shift polynomials for an input multivariate polynomial, so sometimes we could not compute LLL for large lattice in practice. lbc_toolkit outputs fairly reasonable shift polynomials, it includes a few useless shift polynomials, though. 
+Though defund coppersmith can generate arbitrary shift polynomials, it may generate many useless shift polynomials for an input multivariate polynomial, so sometimes we could not compute LLL for large lattice in practice. lbc_toolkit outputs fairly reasonable shift polynomials, it includes a few useless shift polynomials, though.
 
-## how to solve future CTF challenges?
+## How to Solve Future CTF Challenges?
 
 With above discussion, I suggest the following basic strategy.
 
@@ -638,6 +638,327 @@ With above discussion, I suggest the following basic strategy.
 
 Also, I suggest to print debug messages on each stage. If LLL takes much times, we know these parameters are too much. If passes LLL, finds some good polynomials, but not output solution, then we may check Howgrave bounds are satisfied (especially, $\beta$ is fairly restricted). If stucks on computing roots over integer, you might research how to find integer solution. Finding integer solution for multivariate polynomials are not easy in general. (general solver for diophantine equation does not exist.)
 
-## conclusion
+## Conclusion
 
 Lattice is so wild. The detailed discussions will help us for solving many tasks. we are waiting more discussion for specific examples...
+
+## Appendix: rootfind_ZZ
+
+Finding roots over integer is not easy. For one variable polynomial, you only have to use Sage roots method. For multivarite polynomials, we do not know the efficient and exact method for root finiding task. So I implement three method:
+
+1. solve_root_jacobian_newton:
+- numerical method (cannot find all roots, but efficient)
+- iteration method (Newton method: compute gradient(jacobian) and update point to a root)
+- possibly, no root found (converge local minima or divergence)
+2. solve_root_hensel
+- algebraic method (find all roots, slow)
+- find root mod small p and update to mod large modulus
+- possibly, canntot compute a root (too many candidates on modulus even if only a few roots over integer)
+3. solve_root_triangulate
+- algebraic method (find all roots, slow)
+- compute Groebner basis and then find solution by solve function
+- maybe find all roots, sometimes requires manual manipulation (no general method)
+
+```python
+from sage.all import *
+
+from random import shuffle as random_shuffle
+from itertools import product as itertools_product
+import time
+
+from logger import logger
+
+
+def solve_root_onevariable(pollst, bounds):
+    logger.info("start solve_root_onevariable")
+    st = time.time()
+
+    for f in pollst:
+        f_x = f.parent().gens()[0]
+        try:
+            rt_ = f.change_ring(ZZ).roots()
+            rt = [ele for ele, exp in rt_]
+        except:
+            f_QQ = f.change_ring(QQ)
+            f_QQ_x = f_QQ.parent().gens()[0]
+            rt_ = f_QQ.parent().ideal([f_QQ]).variety()
+            rt = [ele[f_QQ_x] for ele in rt_]
+        if rt != []:
+            break
+    result = []
+    for rtele in rt:
+        if any([pollst[i].subs({f_x: int(rtele)}) != 0 for i in range(len(pollst))]):
+            continue
+        if abs(int(rtele)) < bounds[0]:
+            result.append(rtele)
+
+    ed = time.time()
+    logger.info("end solve_root_onevariable. elapsed %f", ed-st)
+
+    return result
+
+
+def solve_root_groebner(pollst, bounds):
+    logger.info("start solve_root_groebner")
+    st = time.time()
+
+    # I heard degrevlex is faster computation for groebner basis, but idk real effect
+    polrng_QQ = pollst[0].change_ring(QQ).parent().change_ring(order='degrevlex')
+    vars_QQ = polrng_QQ.gens()
+    G = Sequence(pollst, polrng_QQ).groebner_basis()
+    try:
+        # not zero-dimensional ideal raises error
+        rt_ = G.ideal().variety()
+    except:
+        logger.warning("variety failed. not zero-dimensional ideal?")
+        return None
+    rt = [[int(ele[v]) for v in vars_QQ] for ele in rt_]
+
+    vars_ZZ = pollst[0].parent().gens()
+    result = []
+    for rtele in rt:
+        if any([pollst[i].subs({v: int(rtele[i]) for i, v in enumerate(vars_ZZ)}) != 0 for i in range(len(pollst))]):
+            continue
+        if all([abs(int(rtele[i])) < bounds[i] for i in range(len(rtele))]):
+            result.append(rtele)
+    
+    ed = time.time()
+    logger.info("end solve_root_groebner. elapsed %f", ed-st)
+    return result
+
+
+def solve_ZZ_symbolic_linear_internal(sol_coefs, bounds):
+    mult = prod(bounds)
+    matele = []
+    for i, sol_coef in enumerate(sol_coefs):
+        denom = 1
+        for sol_coef_ele in sol_coef:
+            denom = LCM(denom, sol_coef_ele.denominator())
+        for sol_coef_ele in sol_coef:
+            matele.append(ZZ(sol_coef_ele * denom * mult))
+        matele += [0]*i + [-mult*denom] + [0] * (len(bounds)-i-1)
+    for idx, bd in enumerate(bounds):
+        matele += [0]*len(sol_coefs[0]) + [0] * idx + [mult//bd] + [0]*(len(bounds)-idx-1)
+    # const term
+    matele += [0]*(len(sol_coefs[0])-1) + [mult] + [0]*len(bounds)
+    mat = matrix(ZZ, len(sol_coefs)+len(bounds)+1, len(sol_coefs[0])+len(bounds), matele)
+    logger.debug(f"start LLL for solve_ZZ_symbolic_linear_internal")
+    mattrans = mat.transpose()
+    lll, trans = mattrans.LLL(transformation=True)
+    logger.debug(f"end LLL")
+    for i in range(trans.nrows()):
+        if all([lll[i, j] == 0 for j in range(len(sol_coefs))]):
+            if int(trans[i,len(sol_coefs[0])-1]) in [1,-1]:
+                linsolcoef = [int(trans[i,j])*int(trans[i,len(sol_coefs[0])-1]) for j in range(len(sol_coefs[0]))]
+                logger.debug(f"linsolcoef found: {linsolcoef}")
+                linsol = []
+                for sol_coef in sol_coefs:
+                    linsol.append(sum([ele*linsolcoef[idx] for idx, ele in enumerate(sol_coef)]))
+                return [linsol]
+    return []
+
+
+def solve_root_triangulate(pollst, bounds):
+    logger.info("start solve_root_triangulate")
+    st = time.time()
+
+    polrng_QQ = pollst[0].change_ring(QQ).parent().change_ring(order='lex')
+    vars_QQ = polrng_QQ.gens()
+    G = Sequence(pollst, polrng_QQ).groebner_basis()
+    if len(G) == 0:
+        return []
+
+    symbolic_vars = [var(G_var) for G_var in G[0].parent().gens()]
+    try:
+        sols = solve([G_ele(*symbolic_vars) for G_ele in G], symbolic_vars, solution_dict=True)
+    except:
+        return None
+
+    logger.debug(f"found sol on triangulate: {sols}")
+
+    result = []
+    # solve method returns parametrized solution. We treat only linear equation
+    # TODO: use solver for more general integer equations (such as diophautus solver, integer programming solver, etc.)
+    for sol in sols:
+        sol_args = set()
+        for symbolic_var in symbolic_vars:
+            sol_var = sol[symbolic_var]
+            sol_args = sol_args.union(set(sol_var.args()))
+
+        sol_args = list(sol_args)
+        sol_coefs = []
+        for symbolic_var in symbolic_vars:
+            sol_var = sol[symbolic_var]
+            sol_coefs_ele = []
+            for sol_arg in sol_args:
+                if sol_var.is_polynomial(sol_arg) == False:
+                    logger.warning("cannot deal with non-polynomial equation")
+                    return None
+                if sol_var.degree(sol_arg) > 1:
+                    logger.warning("cannot deal with high degree equation")
+                    return None
+                sol_var_coef_arg = sol_var.coefficient(sol_arg)
+                if sol_var_coef_arg not in QQ:
+                    logger.warning("cannot deal with multivariate non-linear equation")
+                    return None
+                sol_coefs_ele.append(QQ(sol_var_coef_arg))
+            # constant term
+            const = sol_var.subs({sol_arg: 0 for sol_arg in sol_args})
+            if const not in QQ:
+                return None
+            sol_coefs_ele.append(const)
+
+            sol_coefs.append(sol_coefs_ele)
+        ZZsol = solve_ZZ_symbolic_linear_internal(sol_coefs, bounds)
+        result += ZZsol
+
+    ed = time.time()
+    logger.info("end solve_root_triangulate. elapsed %f", ed-st)
+    return result
+
+
+def solve_root_jacobian_newton_internal(pollst, startpnt):
+    # NOTE: Newton method's complexity is larger than BFGS, but for small variables Newton method converges soon.
+    pollst_Q = Sequence(pollst, pollst[0].parent().change_ring(QQ))
+    vars_pol = pollst_Q[0].parent().gens()
+    jac = jacobian(pollst_Q, vars_pol)
+
+    if all([ele == 0 for ele in startpnt]):
+        # just for prepnt != pnt
+        prepnt = {vars_pol[i]: 1 for i in range(len(vars_pol))}
+    else:
+        prepnt = {vars_pol[i]: 0 for i in range(len(vars_pol))}
+    pnt = {vars_pol[i]: startpnt[i] for i in range(len(vars_pol))}
+
+    maxiternum = 1024
+    iternum = 0
+    while True:
+        if iternum >= maxiternum:
+            logger.warning("failed. maybe, going wrong way.")
+            return None
+
+        evalpollst = [(pollst_Q[i].subs(pnt)) for i in range(len(pollst_Q))]
+        if all([int(ele) == 0 for ele in evalpollst]):
+            break
+        jac_eval = jac.subs(pnt)
+        evalpolvec = vector(QQ, len(evalpollst), evalpollst)
+        try:
+            pnt_diff_vec = jac_eval.solve_right(evalpolvec)
+        except:
+            logger.warning("pnt_diff comp failed.")
+            return None
+
+        prepnt = {key:value for key,value in prepnt.items()}
+        pnt = {vars_pol[i]: round(QQ(pnt[vars_pol[i]] - pnt_diff_vec[i])) for i in range(len(pollst_Q))}
+
+        if all([prepnt[vars_pol[i]] == pnt[vars_pol[i]] for i in range(len(vars_pol))]):
+            logger.warning("point update failed. (converged local sol)")
+            return None
+        prepnt = {key:value for key,value in pnt.items()}
+        iternum += 1
+    return [int(pnt[vars_pol[i]]) for i in range(len(vars_pol))]
+
+
+def solve_root_jacobian_newton(pollst, bounds):
+    logger.info("start solve_root_jacobian newton")
+    st = time.time()
+
+    pollst_local = pollst[:]
+    vars_pol = pollst[0].parent().gens()
+
+    # not applicable to non-determined system
+    if len(vars_pol) > len(pollst):
+        return []
+
+    for _ in range(10):
+        random_shuffle(pollst_local)
+        for signs in itertools_product([1, -1], repeat=len(vars_pol)):
+            startpnt = [signs[i] * bounds[i] for i in range(len(vars_pol))]
+            result = solve_root_jacobian_newton_internal(pollst_local[:len(vars_pol)], startpnt)
+            # filter too much small solution
+            if result is not None:
+                if all([abs(ele) < 2**16 for ele in result]):
+                    continue
+                ed = time.time()
+                logger.info("end solve_root_jacobian newton. elapsed %f", ed-st)
+                return [result]
+
+
+def _solve_root_GF_smallp(pollst, smallp):
+    Fsmallp = GF(smallp)
+    polrng_Fsmallp = pollst[0].change_ring(Fsmallp).parent().change_ring(order='degrevlex')
+    vars_Fsmallp = polrng_Fsmallp.gens()
+    fieldpolys = [varele**smallp - varele for varele in vars_Fsmallp]
+    pollst_Fsmallp = [polrng_Fsmallp(ele) for ele in pollst]
+    G = pollst_Fsmallp[0].parent().ideal(pollst_Fsmallp + fieldpolys).groebner_basis()
+    rt_ = G.ideal().variety()
+    rt = [[int(ele[v].lift()) for v in vars_Fsmallp] for ele in rt_]
+    return rt
+
+
+def solve_root_hensel_smallp(pollst, bounds, smallp):
+    logger.info("start solve_root_hensel")
+    st = time.time()
+
+    vars_ZZ = pollst[0].parent().gens()
+    smallp_exp_max = max([int(log(ele, smallp)+0.5) for ele in bounds]) + 1
+    # firstly, compute low order
+    rt_lows = _solve_root_GF_smallp(pollst, smallp)
+    for smallp_exp in range(1, smallp_exp_max+1, 1):
+        cur_rt_low = []
+        for rt_low in rt_lows:
+            evalpnt = {vars_ZZ[i]:(smallp**smallp_exp)*vars_ZZ[i]+rt_low[i] for i in range(len(vars_ZZ))}
+            nextpollst = [pol.subs(evalpnt)/(smallp**smallp_exp) for pol in pollst]
+            rt_up = _solve_root_GF_smallp(nextpollst, smallp)
+            cur_rt_low += [tuple([smallp**smallp_exp*rt_upele[i] + rt_low[i] for i in range(len(rt_low))]) for rt_upele in rt_up]
+        rt_lows = list(set(cur_rt_low))
+        if len(rt_lows) >= 800:
+            logger.warning("too much root candidates found")
+            return None
+
+    result = []
+    for rt in rt_lows:
+        rtele = [[ele, ele - smallp**(smallp_exp_max+1)][ele >= smallp**smallp_exp_max] for ele in rt]
+        if any([pollst[i].subs({v: int(rtele[i]) for i, v in enumerate(vars_ZZ)}) != 0 for i in range(len(pollst))]):
+            continue
+        if all([abs(int(rtele[i])) < bounds[i] for i in range(len(rtele))]):
+            result.append(rtele)
+
+    ed = time.time()
+    logger.info("end solve_root_hensel. elapsed %f", ed-st)
+    return result
+
+
+def solve_root_hensel(pollst, bounds):
+    for smallp in [2, 3, 5]:
+        result = solve_root_hensel_smallp(pollst, bounds, smallp)
+        if result != [] and result is not None:
+            return result
+    return None
+
+
+## wrapper function
+def rootfind_ZZ(pollst, bounds):
+    vars_pol = pollst[0].parent().gens()
+    if len(vars_pol) != len(bounds):
+        raise ValueError("vars len is invalid (on rootfind_ZZ)")
+
+    # Note: match-case statement introduced on python3.10, but not used for backward compati
+    if len(vars_pol) == 1:
+        return solve_root_onevariable(pollst, bounds)
+    else:
+        # first numeric
+        result = solve_root_jacobian_newton(pollst, bounds)
+        if result != [] and result is not None:
+            return result
+
+        # next hensel (fast if the number of solutions mod smallp**a are small. in not case, cannot find solution)
+        result = solve_root_hensel(pollst, bounds)
+        if result != [] and result is not None:
+            return result
+
+        # last triangulate with groebner (slow, but sometimes solve when above methods does not work)
+        #return solve_root_groebner(pollst, bounds)
+        return solve_root_triangulate(pollst, bounds)
+
+```
