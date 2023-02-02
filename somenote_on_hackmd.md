@@ -175,7 +175,7 @@ Note: The intended solution is to use hidden number problem with some manipulati
 
 ## Introduction to Coppersmith Method
 
-Then, I review Coppersmith method. Recently, sophisticated overview has published: [A Gentle Tutorial for Lattice-Based Cryptanalysis](https://eprint.iacr.org/2023/032.pdf). So I skip basics of lattice except citing the following theorem.
+Then, I review Coppersmith method. Recently, sophisticated overview has published: [A Gentle Tutorial for Lattice-Based Cryptanalysis, J. Surin and S. Cohney, 2023](https://eprint.iacr.org/2023/032.pdf). So I skip basics of lattice except citing the following theorem.
 
 ### **Theorem** [LLL: Lenstra, Lenstra, Lovasz]
 
@@ -303,7 +303,7 @@ Each row vector corresponds to:
 
 These polynomials satisfy $=0 \pmod{b^t}$ with substituting $x=r$. You can see $\dim{L}=t*\delta+u$ and $\det{L} = N^{\delta*t*(t+1)/2}*X^{(t*\delta+u-1)*(t*\delta+u)/2}$. We maximize $X$ on $u$ as ${\det{L}}^{1/\dim{L}} < N^{t*\beta}$, then $t*\delta+u\simeq (t+1)/\beta$ (actually, exact optimized value is a bit smaller) and $\max{X}\simeq N^{(\beta^2*t)/((t+1)*\delta-\beta)}$.
 On the other hand, by using LLL, we can obtain small vector $v_1$ such that $||v_1|| \le 2^{\frac{\dim{L}-1}{4}}\cdot {\det{L}}^{1/\dim{L}}$. So we expect we can find a good polynomial by LLL with above lattice if around $X < 1/2*N^{\beta^2/\delta}$. For detailed discussion about constant multiplication, see [New RSA Vulnerabilities Using
-Lattice Reduction Methods, Thesis, A. May](https://d-nb.info/972386416/34). Note that you do not forget to take into account for the factor $\sqrt{\omega}\ (\omega=\dim{L})$ for Howgrave-Graham bound. $\blacksquare$
+Lattice Reduction Methods, Thesis, A. May, 2003](https://d-nb.info/972386416/34). Note that you do not forget to take into account for the factor $\sqrt{\omega}\ (\omega=\dim{L})$ for Howgrave-Graham bound. $\blacksquare$
 
 Above theorem is theoretically clean, but we sometimes need parameter tuning for applying this to each task in practice. You know, especially $\epsilon$ is problematic if we use the above method as "magic" black box. I experienced $\beta=0.5$ did not work. (For severe condition, we should set more sophisticated parameter setting such as $\beta=0.499$.) Why we need for parameter tuning? This is because it involves asymptotic behavior. On the above proof, I states $\max X\simeq N^{(\beta^2*t)/((t+1)*\delta-\beta)}$, if $t\rightarrow \infty$, then $\max{X}\simeq N^{\beta^2/\delta}$. And approximation and inequality discussion is involved for the proof, it goes worse. So we try to avoid parameter tuning.
 
