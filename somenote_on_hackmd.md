@@ -106,7 +106,7 @@ if __name__ == '__main__':
     service = PoW(512, 200)
 ```
 
-We are given token `t`, exponent `d`, and modulus `n=p*q`. The goal is to find `t^r % n` for `r=2^(2^d) % phi(n)` within 2 minutes. The assumption of Wesolowski's verifiable delay function([Efficient verifiable delay functions](https://eprint.iacr.org/2018/623.pdf)) is that this type of computation is slow if factorization of `n` is unknown. So the author may add an extra interface. We are given weird oracle "broken_oracle", which outputs most significant `L` digits for `u^r % n` given user input `u`.
+We are given token `t`, exponent `d`, and modulus `n=p*q`. The goal is to find `t^r % n` for `r=2^(2^d) % phi(n)` within 2 minutes. The assumption of Wesolowski's verifiable delay function ([Efficient verifiable delay functions](https://eprint.iacr.org/2018/623.pdf)) is that this type of computation is slow if factorization of `n` is unknown. So the author may add an extra interface. We are given weird oracle "broken_oracle", which outputs most significant `L` digits for `u^r % n` given user input `u`.
 
 ## Our Strategy on CTF
 
@@ -591,11 +591,11 @@ This type of lattices can be constructed for another polynomials. For example, i
 
 ## Back to chronophobia
 
-Then, I restate what we want to solve. Let $n=p*q$ be a 1024 bit integer. We have a oracle named broken_token, which leaks $L=200$ digits (about 664bits).
+Then, I restate what we want to solve. Let $N=p*q$ be a 1024 bit integer. We have a oracle named broken_token, which leaks $L=200$ digits (about 664bits).
 For the sake of this oracle, we have known $L$-digits leaked $u1,u2$, and we need to solve the following equation:
 
 $$
-(u1*(10^{Ludown})+y)^2 - (u2*(10^{Lu2down})+x) = 0 \pmod n
+(u1*(10^{Ludown})+y)^2 - (u2*(10^{Lu2down})+x) = 0 \pmod N
 $$,
 
 where `x,y` are small (<=10^Ludown, 10^Lu2down). ($Ludown, Lu2down \le 108$ digits or about 359 bits)
@@ -605,18 +605,46 @@ As I just stated the proposition on general case section, we may ALMOST solve th
 For extending the result, we consider the following equation ($a,b$ are known):
 
 $$
-f(x, y) := -x + y^2 + a*y + b = 0 \pmod{n}
+f(x, y) := -x + y^2 + a*y + b = 0 \pmod{N}
 $$
 
-Let a root of $f$ as $r=(r_1, r_2)$. Assume that $|r_2|<Y$ and $r_2$ is invertible $\pmod{n}$. Define $g(u,v)=-u + v^2 + (a-\mu)*v + b$, where $r_1-\mu*r_2=\nu*n$ for some $\nu \in \mathbb{Z}$. Then, $g(x-\mu*y, y)=f(x,y)$ or $f(u+\mu*v, v)=g(u,v)$. Especially, $g(0, r_2)=0 \pmod{n}$. This means that we can find a polynomial $h(u, v)$ as linear combination of shift polynomials for $g(u, v)$ such that $h'(u, v)$ has a root $(0, r_2)$ over integer if about $Y < N^{1/2}$ (in general case $\delta=2$ and $X < 1$). This means that we may find a polynomial $h(x,y)$ as linear combination of shift polynomials for $f(x,y)$ such that $h(x,y)$ has a root $(r_1, r_2)$ over integer. In fact, $g(x,y)=f(x+\mu*y, y)=f(x,y)-\mu*y$.
-
-I do not know above discussion assures we can construct $h(x,y)$ with shift polynomials of $f(x,y)$ cause I do not construct a lattice directly. (lattice is complicated!) But this intuition is based on outputs of lbc_toolkit. For solving chronophobia, we need the following shift polynomials (These are generated on the paremter $m=2, d=2$.):
+This type of equation was analyzed at [Attacking Power Generators Using Unravelled Linearization: When Do We Output Too Much?, Herrman and May, 2009](https://link.springer.com/content/pdf/10.1007/978-3-642-10366-7_29.pdf). Let $u:=y^2-x$ for linearization. Then,
 
 $$
-{f(x,y)}^2, n*f(x,y)*y, n*f(x,y)*x, n^2*x*y, n^2*x^2, n*f(x,y), n^2*x, n^2*y, n^2
+f^2\\
+= {(u+a*y+b)}^2\\
+= u^2 + a^2*y^2 + b^2 + 2*a*u*y + 2*b*u + 2*a*b*y\\
+= u^2 + 2*a*u*y + (a^2+2*b)*u + a^2 * x + 2*a*b*y + b^2
 $$
 
-This shift polynomials have triangular form. If assuming $Y<1$, it leads $X < N^{5/13}\simeq 2^{393}$. Then, we relook defund coppersmith. It turns out that the paremter $m=2, d=3$ works! This is cause shift polynomials are chosen as the following. (The parameter $m$ is corresponding to our parameter $t=2$. For obtaining $x^2*f(x,y)$, we should set $d=2+1$.)
+Also, $y*f = y*u + a*u + a*x + b*y$.
+
+Then, we construct the lattice $L$ with monomials $U^2, U*Y, U, X, Y, 1$. These shift polynomials are $f^2, y*f*N, f*N, x*N^2, y*N^2, N^2$:
+
+$$
+\begin{pmatrix}
+U^2 & 2*a*U*Y & (a^2+2*b)*U & a^2*X & 2*a*b*Y & b^2\\
+0 & N*U*Y & a*N*U & a*N*X & b*N*Y & 0\\
+0 & 0 & N*U & 0 & a*N*Y & b*N\\
+0 & 0 & 0 & N^2*X & 0 & 0\\
+0 & 0 & 0 & 0 & N^2*Y & 0\\
+0 & 0 & 0 & 0 & 0 & N^2\\
+\end{pmatrix}
+$$
+
+$\dim{L}=6$ and $\det{L}=U^4*X*Y^2*N^8$. Then, assuming $X\simeq Y, U\simeq X^2$, for about $X < N^{\frac{4}{11}}$, we can find good polynomial.
+
+In our case, $1024*(4/11) = 372$, so we can solve the above problem by Coppersmith method.
+
+I do not know above discussion assures we can construct $h(x,y)$ with shift polynomials of $f(x,y)$ (without linearlization) cause I do not construct a lattice directly. (lattice is complicated!) But outputs of lbc_toolkit may be reasonable. For solving chronophobia, we need the following shift polynomials (These are generated on the paremter $m=2, d=2$.):
+
+$$
+{f(x,y)}^2, y*f(x,y)*N, x*f(x,y)*N, x*y*N^2, x^2*N^2, f(x,y)*N, x*N^2, y*N^2, N^2
+$$
+
+This shift polynomials have triangular form (full lattice). And the lattice can generate good polynomial related to $L$ (with linearization).
+
+Then, we relook defund coppersmith. It turns out that the paremter $m=2, d=3$ works! This is cause shift polynomials are chosen as the following. (The parameter $m$ is corresponding to our parameter $t=2$. For obtaining $x^2*f(x,y)$, we should set $d=2+1$.)
 
 ```python
     for i in range(m+1):
@@ -632,7 +660,7 @@ Though defund coppersmith can generate arbitrary shift polynomials, it may gener
 
 With above discussion, I suggest the following basic strategy.
 
-1. Construct input polynomial as no cross term. Or applying linearization as crossterm bounds are small. (If cannot, search papers.)
+1. Construct input polynomial as **no cross term**. Or applying linearization as crossterm bounds are small. (If cannot, search papers.)
 2. try univariate case or Herrmann-May case. parameters are chose based on above discussion, and go up parameters slightly (first $m$ and then $t$)
 3. try heuristic (lbc_toolkit) with going up paremters (first $d$ and then $m$), in parallel, try defund one
 
