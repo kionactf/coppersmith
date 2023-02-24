@@ -1,0 +1,6 @@
+[submodule "fplll"]
+	path = fplll
+	url = https://github.com/fplll/fplll
+[submodule "flatter"]
+	path = flatter
+	url = https://github.com/keeganryan/flatter/
