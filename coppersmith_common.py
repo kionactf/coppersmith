@@ -4,6 +4,7 @@ import time
 
 from logger import logger
 
+from lll import do_lattice_reduction, FPLLL, FPLLL_BKZ, FLATTER
 
 # for large N, precision is problematic
 RRh = RealField(prec=4096)
@@ -45,9 +46,9 @@ def do_LLL(mat):
     logger.info("size of mat for LLL: (%d, %d)", int(mat.nrows()), int(mat.ncols()))
     logger.info("start LLL")
     st = time.time()
-    lll, trans = mat.LLL(algorithm='fpLLL:wrapper', early_red=True, use_siegel=True, transformation=True)
+    lll, trans = do_lattice_reduction(mat, algorithm=FLATTER)
     ed = time.time()
-    logger.info("end LLL. elapsed %d[s]", ed-st)
+    logger.info("end LLL. elapsed %f", ed-st)
     return lll, trans
 
 
@@ -65,7 +66,8 @@ def filter_LLLresult_coppersmith(basepoly, beta, t, shiftpolys, lll, trans):
         lll_l1norm = lll_vecele.norm(p=1)
         if lll_l1norm >= howgrave_bound:
             continue
-        logger.debug("lll_l1norm/howgrave_bound: %s", str(int((lll_l1norm/howgrave_bound)*(10**15))*(0.1**15)) )
+        howgrave_ratio = int(((lll_l1norm/howgrave_bound)*(10**15))*(0.1**15))
+        logger.debug("lll_l1norm/howgrave_bound: %s", str(howgrave_ratio) )
         pol = 0
         for j, shiftpolysele in enumerate(shiftpolys):
             pol += trans[i,j] * shiftpolysele
