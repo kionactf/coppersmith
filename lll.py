@@ -8,8 +8,8 @@ import time
 from logger import logger
 
 
-fplll_path = './fplll/fplll' # /usr/bin
-flatter_path = './flatter/build/bin' # /usr/bin
+fplll_path = './coppersmith/fplll/fplll' # /usr/bin
+flatter_path = './coppersmith/flatter/build/bin' # /usr/bin
 
 # algorithm
 FPLLL = 0
