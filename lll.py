@@ -1,11 +1,8 @@
 from sage.all import *
-from sage.matrix.matrix_integer_dense_hnf import hnf_with_transformation
 
 from typing import Tuple, List
 from subprocess import run as subprocess_run
 from re import sub as re_sub
-from random import shuffle as random_shuffle
-from random import choice as random_choice
 import time
 
 from logger import logger
@@ -18,6 +15,8 @@ flatter_path = './flatter/build/bin' # /usr/bin
 FPLLL = 0
 FPLLL_BKZ = 1
 FLATTER = 2
+NTL = 3
+NTL_BKZ = 4
 
 # fplll option
 ## fplll_version ('fast' is only double, 'proved' cannot be used with early reduction)
@@ -25,7 +24,7 @@ WRAPPER = 'wrapper'
 HEURISTIC = 'heuristic'
 
 # on flatter, call kermat on pari
-pari.allocatemem(4*1024*1024*1024)
+pari.allocatemem(1024*1024*1024)
 
 
 def _from_sagematrix_to_fplllmatrix(mat: matrix) -> str:
@@ -132,7 +131,7 @@ def do_LLL_flatter(
     if kerdim == matrow: # full kernel
         return zero_matrix(ZZ, matrow, col), ker
     if kerdim == 0:
-        H_sub = mat
+        Hsub = mat
         U = identity_matrix(ZZ, matrow)
     else: # heuristic construct unimodular matrix for mapping zero vectors on first kernel dimension
         # searching unimodular matrix can be done by HNF (echoron_form(algorithm='pari') calls mathnf(), but it is slow and produces big elements)
@@ -142,6 +141,8 @@ def do_LLL_flatter(
         ker_submat_rows = tuple(range(kerdim))
         ker_submat_cols = tuple(range(matrow-kerdim, matrow, 1))
         ker_last_det = int(ker[ker_submat_rows, ker_submat_cols].determinant())
+        if ker_last_det == 0:
+            raise ValueError("no unimodular matrix found (cause ker_last_det=0)")
         for choice in range(matrow-kerdim-1, -1, -1):
             # gcd check
             gcd_row = ker_last_det
@@ -194,9 +195,9 @@ def do_LLL_flatter(
     trans = _transformation_matrix(Hsub, lllmat)
 
     restrows = mat.nrows() - lllmat.nrows()
-    final_lllmat = matrix(ZZ, restrows, lllmat.ncols()).stack(lllmat) # stack zero matrix
-    middle_trans = identity_matrix(ZZ, restrows).augment(matrix(ZZ, restrows, trans.ncols())).stack(
-        matrix(ZZ, trans.nrows(), restrows).augment(trans)
+    final_lllmat = zero_matrix(ZZ, restrows, lllmat.ncols()).stack(lllmat)
+    middle_trans = identity_matrix(ZZ, restrows).augment(zero_matrix(ZZ, restrows, trans.ncols())).stack(
+        zero_matrix(ZZ, trans.nrows(), restrows).augment(trans)
     )
     final_trans = middle_trans * U
     #assert abs(final_trans.determinant()) == 1
@@ -205,7 +206,20 @@ def do_LLL_flatter(
     return final_lllmat, final_trans
 
 
+def do_LLL_NTL(mat: matrix) -> Tuple[matrix, matrix]:
+    return mat.LLL(algorithm="NTL:LLL", transformation=True)
+
+
+def do_BKZ_NTL(
+        mat: matrix,
+        blocksize : int = 10, prune : int = 0
+    ) -> Tuple[matrix, matrix]:
+    lllmat = mat.BKZ(algorithm="NTL", block_size=blocksize, prune=prune)
+    trans = _transformation_matrix(mat, lllmat)
+    return lllmat, trans
+
+
 ## wrapper function
 def do_lattice_reduction(mat: matrix, algorithm: int = FLATTER, **kwds) -> Tuple[matrix, matrix]:
-    algorithm_dict = {FLATTER: do_LLL_flatter, FPLLL: do_LLL_fplll, FPLLL_BKZ: do_BKZ_fplll}
+    algorithm_dict = {FLATTER: do_LLL_flatter, FPLLL: do_LLL_fplll, FPLLL_BKZ: do_BKZ_fplll, NTL: do_LLL_NTL, NTL_BKZ: do_BKZ_NTL}
     return algorithm_dict[algorithm](mat, **kwds)

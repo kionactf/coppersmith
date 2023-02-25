@@ -4,7 +4,7 @@ import time
 
 from logger import logger
 
-from lll import do_lattice_reduction, FPLLL, FPLLL_BKZ, FLATTER
+from lll import do_lattice_reduction, FPLLL, FPLLL_BKZ, FLATTER, NTL, NTL_BKZ
 
 # for large N, precision is problematic
 RRh = RealField(prec=4096)
