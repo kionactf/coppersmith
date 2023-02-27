@@ -46,7 +46,7 @@ def do_LLL(mat):
     logger.info("size of mat for LLL: (%d, %d)", int(mat.nrows()), int(mat.ncols()))
     logger.info("start LLL")
     st = time.time()
-    lll, trans = do_lattice_reduction(mat, algorithm=FLATTER)
+    lll, trans = do_lattice_reduction(mat, algorithm=FLATTER, use_pari_kernel=True)
     ed = time.time()
     logger.info("end LLL. elapsed %f", ed-st)
     return lll, trans
