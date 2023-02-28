@@ -47,7 +47,7 @@ def _fplllmatrix_to_sagematrix(matrixstr: str) -> matrix:
 def _transformation_matrix(mat, lllmat, use_pari_kernel=True):
     # pari.matker() does not assure smallest kernel in Z (seems not call hermite normal form)
     # Sage kernel calls hermite normal form
-
+    #
     # for computing ZZ transformation, use pari.matker, pari.matsolvemod
     # assume first kerdim vectors for lllmat are zero vector
     if use_pari_kernel:
@@ -66,7 +66,9 @@ def _transformation_matrix(mat, lllmat, use_pari_kernel=True):
     mat_pari = pari.matrix(mat.nrows(), mat.ncols(), mat.list())
     for i in range(kerdim, lllmat.nrows(), 1):
         lllmat_pari = pari.vector(lllmat.ncols(), lllmat[i].list())
-        trans_pari_t = pari.matsolvemod(pari.mattranspose(mat_pari), 0, pari.mattranspose(lllmat_pari))
+        trans_pari_t = pari.matsolvemod(
+            pari.mattranspose(mat_pari), 0, pari.mattranspose(lllmat_pari)
+        )
         transele = matrix(ZZ, trans_pari_t.mattranspose().Col().list())
         trans = trans.stack(transele)
     return trans
@@ -98,7 +100,8 @@ def _xgcd_list(intlst: List[int]) -> Tuple[int, List[int]]:
 
 def do_LLL_fplll(
         mat: matrix,
-        use_siegel : int = True, fplll_version : str = WRAPPER, early_reduction : bool = True, use_pari_kernel : bool = True
+        use_siegel : int = True, fplll_version : str = WRAPPER, early_reduction : bool = True,
+        use_pari_kernel : bool = True
     ) -> Tuple[matrix, matrix]:
     matstr = _from_sagematrix_to_fplllmatrix(mat)
     if early_reduction:
@@ -150,7 +153,7 @@ def do_LLL_flatter(
 
     if mat == zero_matrix(ZZ, mat.nrows(), mat.ncols()):
         return mat, identity_matrix(ZZ, mat.nrows())
-    
+
     # sage has integer_kernel(), but somehow slow. instead using pari.matker
     if use_pari_kernel:
         mat_pari = pari.matrix(mat.nrows(), mat.ncols(), mat.list())
@@ -167,9 +170,14 @@ def do_LLL_flatter(
     if kerdim == 0:
         Hsub = mat
         U = identity_matrix(ZZ, matrow)
-    else: # heuristic construct unimodular matrix for mapping zero vectors on first kernel dimension
-        # searching unimodular matrix can be done by HNF (echoron_form(algorithm='pari') calls mathnf(), but it is slow and produces big elements)
-        # instead, seaching determinant of submatrix = 1/-1, then the determinant of whole unimodular matrix is det(submatrix)*(-1)^j
+    else:
+        # heuristic construction for unimodular matrix which maps zero vectors on kernel
+        # searching unimodular matrix can be done by HNF
+        # (echeron_form(algorithm='pari') calls mathnf()),
+        # but it is slow and produces big elements
+        #
+        # instead, searching determinant of submatrix = 1/-1,
+        # then the determinant of whole unimodular matrix is det(submatrix)*(-1)^j
         # assume kernel has good property for gcd (gcd of some row elements might be 1)
         found_choice = False
         ker_submat_rows = tuple(range(kerdim))
@@ -268,7 +276,50 @@ def do_BKZ_NTL(
 
 ## wrapper function
 def do_lattice_reduction(mat: matrix, algorithm: int = FLATTER, **kwds) -> Tuple[matrix, matrix]:
-    return LLL_algorithm_dict[algorithm](mat, **kwds)
+    """
+    LLL/BKZ reduction
+    input: (mat, algorithm, **kwds)
+            - mat: target lattice representation matrix for LLL/BKZ reduction
+            - algorithm: int value which specify which algorithm will be used
+              (FPLLL, FPLLL_BKZ, FLATTER, NTL, NTL_BKZ)
+    output: (lllmat, trans)
+            - lllmat: LLL/BKZ reduced basis matrix (might include zero-vectors)
+            - trans: transformation matrix s.t. lllmat = trans * mat
+    """
+    logger.info("size of mat for lattice reduction: (%d, %d)", int(mat.nrows()), int(mat.ncols()))
+    logger.debug(
+        "lattice reduction param: algorithm=%s, param=%s",
+        LLL_algorithm_str[algorithm], str(kwds)
+    )
+    logger.info("start lattice reduction")
+    st = time.time()
+
+    result = LLL_algorithm_dict[algorithm](mat, **kwds)
+
+    ed = time.time()
+    logger.info("end lattice reduction. elapsed %f", ed-st)
+
+    return result
+
+
+def babai(mat: matrix, target: vector, algorithm: int = FLATTER, **kwds) -> Tuple[vector, vector]:
+    """
+    Babai nearlest plain algorithm for solving CVP
+    input: (mat, target, **kwds)
+            - mat: lattice representation matrix for LLL/BKZ reduction
+            - target: target integer vector for solving close point in lattice
+            - algorithm: int value which specify which algorithm will be used
+              (FPLLL, FPLLL_BKZ, FLATTER, NTL, NTL_BKZ)
+    output: (diff, trans)
+            - diff: subtract of target from lattice_point which is close for target
+            - trans: transformation matrix s.t. lattice_point = trans * mat
+    """
+    lll, trans = do_lattice_reduction(mat, algorithm, **kwds)
+    # gram-schmidt process is slow. use solve_left in QQ
+    sol_QQ = (lll.change_ring(QQ)).solve_left((target.change_ring(QQ)))
+    sol_approx_ZZ_lst = [ZZ(QQ(sol_QQ_ele).round()) for sol_QQ_ele in sol_QQ.list()]
+    sol_approx_ZZ = vector(ZZ, len(sol_approx_ZZ_lst), sol_approx_ZZ_lst)
+    return target - sol_approx_ZZ * lll, sol_approx_ZZ * trans
 
 
 def test():
@@ -278,7 +329,7 @@ def test():
         ("twodim_indep", [[1,2,3],[4,5,6]]),
         ("twodim_dep", [[1,2,3],[2,4,6]]),
         ("threedim_indep", [[1,2,3],[4,5,6],[7,8,9]]),
-        ("threedim_one_dep", [[1,2,3], [2,4,6], [8,9,10]]),
+        ("threedim_one_dep", [[1,2,3],[2,4,6],[8,9,10]]),
         ("threedim_two_dep", [[1,2,3],[2,4,6],[3,6,9]]),
         ("overdim", [[1,2,3],[4,5,6],[7,8,9],[10,11,12]]),
         ("overdim_onedep", [[1,2,3],[4,5,6],[3,6,9],[5,6,7]]),
@@ -300,10 +351,18 @@ def test():
             print("")
 
 
-LLL_algorithm_dict = {FLATTER: do_LLL_flatter, FPLLL: do_LLL_fplll, FPLLL_BKZ: do_BKZ_fplll, NTL: do_LLL_NTL, NTL_BKZ: do_BKZ_NTL}
-LLL_algorithm_str = {FLATTER: 'FLATTER', FPLLL: 'FPLLL', FPLLL_BKZ: 'FPLLL_BKZ', NTL: 'NTL', NTL_BKZ: 'NTL_BKZ'}
+LLL_algorithm_dict = {
+    FLATTER: do_LLL_flatter,
+    FPLLL: do_LLL_fplll, FPLLL_BKZ: do_BKZ_fplll,
+    NTL: do_LLL_NTL, NTL_BKZ: do_BKZ_NTL
+}
+
+LLL_algorithm_str = {
+    FLATTER: 'FLATTER',
+    FPLLL: 'FPLLL', FPLLL_BKZ: 'FPLLL_BKZ',
+    NTL: 'NTL', NTL_BKZ: 'NTL_BKZ'
+}
 
 
 if __name__ == '__main__':
     test()
-
