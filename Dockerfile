@@ -48,6 +48,8 @@ RUN make -j4
 
 WORKDIR /home/sage/
 
+ENV PYTHONPATH=/home/sage/coppersmith/:$PYTHONPATH
+
 
 ## other lattice library download
 RUN mkdir lattice_tools
