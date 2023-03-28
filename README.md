@@ -88,7 +88,7 @@ MIT license (https://github.com/jvdsn/crypto-attacks/blob/master/LICENSE)
 
 This library is distributed under Apache 2.0 License. See LICENSE.
 
-(C) 2023 kiona<kiona.ctf@gmail.com>
+(C) 2023 kiona <kiona.ctf@gmail.com>
 
 https://github.com/kionactf/coppersmith
 
