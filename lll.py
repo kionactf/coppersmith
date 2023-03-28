@@ -59,18 +59,23 @@ def _transformation_matrix(mat, lllmat, use_pari_kernel=True):
             trans = matrix(ZZ, 0, mat.nrows())
         else:
             trans = matrix(ZZ, pari.mattranspose(ker_pari_t).Col().list())
+
+        mat_pari = pari.matrix(mat.nrows(), mat.ncols(), mat.list())
+        for i in range(kerdim, lllmat.nrows(), 1):
+            lllmat_pari = pari.vector(lllmat.ncols(), lllmat[i].list())
+            trans_pari_t = pari.matsolvemod(
+                pari.mattranspose(mat_pari), 0, pari.mattranspose(lllmat_pari)
+            )
+            transele = matrix(ZZ, trans_pari_t.mattranspose().Col().list())
+            trans = trans.stack(transele)
     else:
         trans = mat.kernel().matrix()
         kerdim = trans.nrows()
 
-    mat_pari = pari.matrix(mat.nrows(), mat.ncols(), mat.list())
-    for i in range(kerdim, lllmat.nrows(), 1):
-        lllmat_pari = pari.vector(lllmat.ncols(), lllmat[i].list())
-        trans_pari_t = pari.matsolvemod(
-            pari.mattranspose(mat_pari), 0, pari.mattranspose(lllmat_pari)
-        )
-        transele = matrix(ZZ, trans_pari_t.mattranspose().Col().list())
-        trans = trans.stack(transele)
+        for i in range(kerdim, lllmat.nrows(), 1):
+            transele = mat.solve_left(lllmat[i])
+            trans = trans.stack(transele)
+
     return trans
 
 
