@@ -59,7 +59,7 @@ def solve_root_groebner(pollst, bounds):
             continue
         if all([abs(int(rtele[i])) < bounds[i] for i in range(len(rtele))]):
             result.append(rtele)
-    
+
     ed = time.time()
     logger.info("end solve_root_groebner. elapsed %f", ed-st)
     return result
@@ -298,4 +298,3 @@ def rootfind_ZZ(pollst, bounds):
         # last triangulate with groebner (slow, but sometimes solve when above methods does not work)
         #return solve_root_groebner(pollst, bounds)
         return solve_root_triangulate(pollst, bounds)
-

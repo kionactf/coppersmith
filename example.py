@@ -2,10 +2,13 @@ from sage.all import *
 
 import time
 from Crypto.Util.number import *
+from random import randrange, randint
 
 from coppersmith_onevariable import coppersmith_onevariable
 from coppersmith_linear import coppersmith_linear
+from coppersmith_multivariate_heuristic import coppersmith_multivariate_heuristic
 from logger import logger
+
 
 def example_onevariable_linear():
     our_small_roots = lambda f, X: coppersmith_onevariable(f, [X], beta)
@@ -46,6 +49,7 @@ def example_onevariable_linear():
         # sometimes works with small beta (but 496 not works)
         print(f"sage result (small beta):{f.small_roots(X=2**discardbitsize, beta=0.4)}")
 
+
 def example_twovariable_linear():
     our_small_roots = lambda f, bounds: coppersmith_linear(f, bounds, beta)
     bitsize = 2048
@@ -81,6 +85,7 @@ def example_twovariable_linear():
             bounds.append(2**ele[1])
         result = our_small_roots(f, bounds)
         print(f"result:{result}, real:{real}")
+
 
 def example_threevariable_linear():
     our_small_roots = lambda f, bounds: coppersmith_linear(f, bounds, beta)
@@ -118,6 +123,74 @@ def example_threevariable_linear():
         result = our_small_roots(f, bounds)
         print(f"result:{result}, real:{real}")
 
+
+def _example_multivariate_heuristic_1():
+    # from bivariate_example on https://github.com/josephsurin/lattice-based-cryptanalysis/blob/main/examples/problems/small_roots.sage
+    N = random_prime(2**512) * random_prime(2**512)
+    bounds = (2**164, 2**164) # N**0.16
+    roots = tuple(randrange(bound) for bound in bounds)
+    P = PolynomialRing(Zmod(N), 2, ["x", "y"])
+    x, y = P.gens()
+    monomials = [x, y, x*y, x**2, y**2]
+    f = sum(randrange(N) * monomial for monomial in monomials)
+    f -= f(*roots)
+    sol = coppersmith_multivariate_heuristic(f, bounds, 1.0)
+    print(f"result:{sol}, real:{roots}")
+
+
+def _example_multivariate_heuristic_2():
+    # from trivariate_example on https://github.com/defund/coppersmith/blob/master/examples.sage
+    p = random_prime(2**1024)
+    q = random_prime(2**1024)
+    N = p*q
+    bounds = (2**246, 2**246, 2**246) # N**0.12
+    roots = tuple(randrange(bound) for bound in bounds)
+    P = PolynomialRing(Zmod(N), 3, ["x", "y", "z"])
+    x, y, z = P.gens()
+    monomials = [x, y, x*y, x*z, y*z]
+    f = sum(randrange(N)*monomial for monomial in monomials)
+    f -= f(*roots)
+    sol = coppersmith_multivariate_heuristic(f, bounds, 1.0)
+    print(f"result:{sol}, real:{roots}")
+
+
+def _example_multivariate_heuristic_3():
+    # chronophobia from idekCTF2022
+    L = 200
+
+    p = getPrime(512)
+    q = getPrime(512)
+    n = p*q
+    phi = (p-1) * (q-1)
+
+    t = randint(0, n-1)
+    d = randint(128, 256)
+    r = pow(2, 1 << d, phi)
+
+    ans1 = pow(t, r, n)
+    u1 = int(str(ans1)[:L])
+    L1down = len(str(ans1)[L:])
+    ans2 = pow(pow(t, 2, n), r, n)
+    u2 = int(str(ans2)[:L])
+    L2down = len(str(ans2)[L:])
+
+    P = PolynomialRing(Zmod(n), 2, ["x", "y"])
+    x, y = P.gens()
+
+    f = (u1 * (10**L1down) + x)**2 - (u2 * (10**L2down) + y)
+    bounds = [10**L1down, 10**L2down]
+
+    sol = coppersmith_multivariate_heuristic(f, bounds, 1.0)
+    print(f"result:{sol}, real:{(str(ans1)[L:], str(ans2)[L:])}")
+
+
+def example_multivariate_heuristic():
+    _example_multivariate_heuristic_1()
+    _example_multivariate_heuristic_2()
+    _example_multivariate_heuristic_3()
+
+
 #example_onevariable_linear()
 #example_twovariable_linear()
-example_threevariable_linear()
+#example_threevariable_linear()
+example_multivariate_heuristic()
