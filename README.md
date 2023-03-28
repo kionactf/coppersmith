@@ -77,13 +77,19 @@ multivariate coppersmith method: `lbc_toolkit/problems/small_roots.sage`. Some s
 - jvdsn/crypto-attacks (https://github.com/jvdsn/crypto-attacks)
 
 various coppersmith methods (including Herrmann-May, Blomer-May, Boneh-Durfee, Jochemsz-May, etc.): `shared/small_roots/*.py`. Some solvers for integer polynomial roots are at `shared/small_roots/__init__.py`.
-jvdsn/crypto-attacks is distributed under MIT license (https://github.com/jvdsn/crypto-attacks/blob/master/LICENSE) (c) 2020 Joachim Vandersmissen.
+
+jvdsn/crypto-attacks is distributed under:
+
+MIT license (https://github.com/jvdsn/crypto-attacks/blob/master/LICENSE)
+
+(c) 2020 Joachim Vandersmissen.
 
 ## Copyright
 
 This library is distributed under Apache 2.0 License. See LICENSE.
 
 (C) 2023 kiona<kiona.ctf@gmail.com>
+
 https://github.com/kionactf/coppersmith
 
 For redistribution, just say that it has been changed and note the link for our files.

@@ -7,7 +7,7 @@
 - It would be better trying many things, instead of detailed analysis, on CTF
 - Simple strategy is good, but tuning parameters not good. Applying past genius works is definitely better.
 
-## chronophobia
+## chronophobia (from idekCTF 2022)
 
 ```python
 #!/usr/bin/env python3
@@ -40,7 +40,7 @@ class PoW():
         print("[1] Broken Oracle")
         print("[2] Verify")
         print("[3] Exit")
-        
+
         op = int(input(">>> "))
         return op
 
@@ -50,7 +50,7 @@ class PoW():
 
             op = self.menu()
             if op == 1:
-                self.broken_oracle()            
+                self.broken_oracle()
             elif op == 2:
                 self.verify()
             elif op == 3:
@@ -61,7 +61,7 @@ class PoW():
 
         self.p = getPrime(self.kbits)
         self.q = getPrime(self.kbits)
-        
+
         self.n = self.p * self.q
         self.phi = (self.p - 1) * (self.q - 1)
 
@@ -91,8 +91,8 @@ class PoW():
 
     def verify(self):
 
-        inp = int(input(f"Give me the ticket. "))        
-       
+        inp = int(input(f"Give me the ticket. "))
+
         if inp == self.ans:
             print("Good :>")
             with open("flag.txt", "rb") as f:
@@ -204,11 +204,11 @@ $$
 If the solution `x0` is small, we can assume that the modulus solution `x0` can be find by just solving over integer. (The modulus equation can be reduced to infinitely integer equations $=0,=\pm{N},\pm{2*N},\ldots$, but $=0$ is only case if `x0` is small enough.) Solving modulus equation is hard, but solving integer equation is easier. In fact, Sagemath solve it in seconds.
 
 ```python
-sage: P=PolynomialRing(ZZ, 'x') 
-sage: x=P.gens()[0] 
+sage: P=PolynomialRing(ZZ, 'x')
+sage: x=P.gens()[0]
 sage: f= x^2 -35660676653358573538*x-1006707748483862406125449872514995205080
 sage: f.roots()
-[(54225787401085700998, 1), (-18565110747727127460, 1)] 
+[(54225787401085700998, 1), (-18565110747727127460, 1)]
 ```
 
 This is the essence of Coppersmith method: reducing modulus equation to *small* integer equation.
@@ -503,10 +503,10 @@ def coppersmith_linear(basepoly, bounds, beta, maxmatsize=120, maxm=8):
     n = len(basepoly_vars)
     if n == 1:
         raise ValueError("one variable poly")
-    
+
     if not set(basepoly.monomials()).issubset(set(list(basepoly_vars)+[1])):
         raise ValueError("non linear poly")
-    
+
     log_N_X = RRh(log(product(bounds), N))
     log_N_X_bound = 1-(1-RRh(beta))**(RRh(n+1)/n) - (n+1)*(1-(1-RRh(beta))**(RRh(1)/n)) * (1-RRh(beta))
 
@@ -642,7 +642,7 @@ $$
 {f(x,y)}^2, y*f(x,y)*N, x*f(x,y)*N, x*y*N^2, x^2*N^2, f(x,y)*N, x*N^2, y*N^2, N^2
 $$
 
-This shift polynomials have triangular form (full lattice). And the lattice can generate good polynomial related to $L$ (with linearization).
+This shift polynomials have triangular form (full lattice). And the lattice can generate good polynomial related to the lattice $L$ (with linearization).
 
 Then, we relook defund coppersmith. It turns out that the parameter $m=2, d=3$ works! This is cause shift polynomials are chosen as the following. (The parameter $m$ is corresponding to our parameter $t=2$. For obtaining $x^2*N^2$, we should set $d=2+1$.)
 
@@ -749,7 +749,7 @@ def solve_root_groebner(pollst, bounds):
             continue
         if all([abs(int(rtele[i])) < bounds[i] for i in range(len(rtele))]):
             result.append(rtele)
-    
+
     ed = time.time()
     logger.info("end solve_root_groebner. elapsed %f", ed-st)
     return result
