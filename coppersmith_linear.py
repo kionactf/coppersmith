@@ -91,6 +91,7 @@ def coppersmith_linear(basepoly, bounds, beta, maxmatsize=100, maxm=8):
                 logger.info("whole elapsed time: %f", whole_ed-whole_st)
                 return sol
             elif len(curfoundpols) >= 2 * n + 1:
+                whole_ed = time.time()
                 logger.warning(f"failed. maybe, wrong pol was passed.")
                 logger.info("whole elapsed time: %f", whole_ed-whole_st)
                 return []

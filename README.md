@@ -58,6 +58,18 @@ For computing LLL, we use pari.matker for eliminating linearly dependent vectors
 
 See [Why we could not solve chronophobia… Analysis for Coppersmith method more](https://hackmd.io/pP-iS2FtSWevJBcE6MEjBg). (it might be an old article, though.)
 
+## Completeness of the Package
+
+Q: Can you solve many modulus multivariate polynomial systems by the package?
+
+A: Maybe no. It seems to be hard to create general modulus multivariate polynomial solver. It depends on monomials (such as $f=a*x^2 + b*y + c$ `v.s.` $g=a*x^2 + b*x*y + c*y + d$), coefficients (such as $f=a*x^2-b*y+c$ `v.s.` $g=a*x^2-a*y+c$), and bounds (such as $X \simeq Y$ `v.s.` $X \simeq Y^2$). Many papers handle each specific cases.
+
+Especially, we do not recommend to use heuristic method without understanding the polynomial. Heuristic method does not estimate bound condition (unlike univariate case or linear case), so you would be confused that the solver did not output as what you expected.
+
+Alternatively, you may use linearization strategy and/or apply rootfind_ZZ directly. For example, if you want to solve $f=a*x^2+b*y \pmod{N}$, first define ${f_\mathbb{Z}}=a*xx+b*y+k*N \in \mathbb{Z}[xx,y,k]$, then apply rootfind_ZZ (or other integer polynomial solver) with bound $[X^2, Y]$ (we search $k$ with bruteforce). If we can assume $|k|$ is small, the system will be solved. Note that Coppersmith methods does not necessarily find algebraically independent polynomial sets. So you might have to solve same polynomial system $f_\mathbb{Z}$ even if you forced to apply Coppersmith method. rootfind_ZZ.solve_root_triangulate tries to solve nonzero-dimensional linear system.
+
+Note that rootfind_ZZ does not necessarily find all roots, but only a few roots. Finding roots over integer is not easy, so you should not use the package for multiple roots included system. You can devise some methods for avoiding multiple roots. Some method might be narrowing bounds range by converting variables.
+
 ## Contribution
 
 The package must not be perfect, we want you to be reviewed and improved this. Welcome to post any issues, pull requests and forks. And let us know `test cases` from any CTF or other resources.
