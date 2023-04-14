@@ -62,7 +62,7 @@ See [Why we could not solve chronophobia… Analysis for Coppersmith method more
 
 Q: Can you solve many modulus multivariate polynomial systems by the package?
 
-A: Maybe no. It seems to be hard to create general modulus multivariate polynomial solver. It depends on monomials (such as \[$f=ax^2 + by + c$\] `v.s.` \[$g=ax^2 + bxy + cy + d$\]), coefficients (such as \[$f=ax^2-by+c$\] `v.s.` \[$g=ax^2-ay+c$\]), and bounds (such as \[$X \simeq Y$\] `v.s.` \[$X \simeq Y^2$\]). Many papers handle each specific cases.
+A: Maybe no. It seems to be hard to create general modulus multivariate polynomial solver. It depends on monomials (such as \[ $f=ax^2 + by + c$ \] `v.s.` \[ $g=ax^2 + bxy + cy + d$ \]), coefficients (such as \[ $f=ax^2-by+c$ \] `v.s.` \[ $g=ax^2-ay+c$ \]), and bounds (such as \[ $X \simeq Y$ \] `v.s.` \[ $X \simeq Y^2$ \]). Many papers handle each specific cases.
 
 Especially, we do not recommend to use heuristic method without understanding the polynomial. Heuristic method does not estimate bound condition (unlike univariate case or linear case), so you would be confused that the solver did not output as what you expected.
 

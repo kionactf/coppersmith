@@ -119,10 +119,10 @@ I saw the challenge after having nice progress by @soon_haari. His idea is:
 If we assume that `u=u1*(10^Ludown)+x`, `u^2 % n=u2*(10^Lu2down)+y`, then
 
 $$
-(u1(10^{\text{Ludown}})+x)^2 - (u2(10^{\text{Lu2down}})+y) = 0 \pmod n
+(u1\cdot (10^{\text{Ludown}})+x)^2 - (u2\cdot (10^{\text{Lu2down}})+y) = 0 \pmod n
 $$
 
-`x,y` are small ($<=10^\text{Ludown}, 10^\text{Lu2down}$), we may expect LLL could solve the challenge.
+`x,y` are small ($\le 10^\text{Ludown}, 10^\text{Lu2down}$), we may expect LLL could solve the challenge.
 It is nice, but it only works `L=250`. In our setting, we have to solve it for `L=200`.
 
 Then, I started tuning lattice, but it failed. And I tried to apply another idea: using `u^-1 % n` instead of `u^2 % n`. Even though it solved it for `L=210`, but it did not work for `L=200` ...
@@ -220,7 +220,7 @@ This is the essence of Coppersmith method: reducing modulus equation to *small* 
 Let's state Howgrave-Graham theorem. First, let $h(x_1,x_2,\ldots,x_n) = \sum_{(i_1,i_2,\ldots,i_n)}h_{i_1,i_2,\ldots,i_n}{x_1}^{i_1} \cdot {x_2}^{i_2} \cdots {x_n}^{i_n} \in \mathbb{Z}[x_1,x_2,\ldots,x_n]$. And $X_1,X_2,\ldots,X_n \in \mathbb{Z}_{>0}$. Then, we define
 
 $$
-{\|h(x_1X_1,\ldots,x_nX_n)\|}_2 \coloneqq \sqrt{\sum_{(i_1,i_2,\ldots,i_n)} {\left( h_{i_1,i_2,\ldots,i_n}{X_1}^{i_1} \cdot {X_2}^{i_2} \cdots {X_n}^{i_n} \right)}^2}
+{\|h(x_1X_1,\ldots,x_nX_n)\|}_2 := \sqrt{\sum_{(i_1,i_2,\ldots,i_n)} {\left( h_{i_1,i_2,\ldots,i_n}{X_1}^{i_1} \cdot {X_2}^{i_2} \cdots {X_n}^{i_n} \right)}^2}
 $$
 
 Then, we can prove the following:
@@ -247,7 +247,7 @@ The last inequality follows from Cauchy-Schwaltz inequality. $\blacksquare$
 
 ### **Note**
 
-On the proof of above, we uses Cauchy-Schwaltz for obtaining the condition about ${\|\cdot\|}_2$ (L2-norm). But, obviously, it is sufficient to check the condition ${\|h(x_1X_1,\ldots,x_nX_n)\|}_1 \coloneqq \sum_{(i_1,i_2,\ldots,i_n)}  |h_{i_1,i_2,\ldots,i_n}{X_1}^{i_1} \cdot {X_2}^{i_2} \cdots {X_n}^{i_n}| < N$. We will use the L1-norm condition for checking obtaining polynomials are good or not. $\blacksquare$
+On the proof of above, we uses Cauchy-Schwaltz for obtaining the condition about ${\|\cdot\|}_2$ (L2-norm). But, obviously, it is sufficient to check the condition ${\|h(x_1X_1,\ldots,x_nX_n)\|}_1 := \sum_{(i_1,i_2,\ldots,i_n)}  |h_{i_1,i_2,\ldots,i_n}{X_1}^{i_1} \cdot {X_2}^{i_2} \cdots {X_n}^{i_n}| < N$. We will use the L1-norm condition for checking obtaining polynomials are good or not. $\blacksquare$
 
 Then, if we want to find a solution $(r_1,\ldots,r_n) \in {\mathbb{Z}}^n$ for $f(x_1,\ldots,x_n) = 0 \pmod{N}$ given $|r_1|<X_1,\ldots,|r_n|<X_n$, we do the following:
 
@@ -262,10 +262,10 @@ On first introductory example, $g_1=f, g_2=N, g_3=Nx$ (all satisfies $=0 \pmod{N
 For $f(x_1,\ldots,x_n) \in \mathbb{Z}[x_1,\ldots,x_n]$ and the modulus $N$,
 
 $$
-g_{i_f,i_N,j_1,\ldots,j_n} \coloneqq f^{i_f} \cdot N^{i_N} \cdot {x_1}^{j_1}\ldots {x_n}^{j_n}
+g_{i_f,i_N,j_1,\ldots,j_n} := f^{i_f} \cdot N^{i_N} \cdot {x_1}^{j_1}\ldots {x_n}^{j_n}
 $$
 
-for $i_f, i_N, j_1,\ldots j_n \ge 0$ and $i_f+i_N \ge t $ are called as shift polynomials for $f$.
+for $i_f, i_N, j_1,\ldots j_n \ge 0$ and $i_f+i_N \ge t$ are called as shift polynomials for $f$.
 If $(r_1,\ldots,r_n)\in {\mathbb{Z}}^n$ is a solution for $f \pmod{N}$, then $g_{i,j_1,\ldots,j_n}(r_1,\ldots,r_n)=0 \pmod{N^t}$. $\blacksquare$
 
 Though powering of $f$ increases involving monomials, it generates many $g_i$, so we may expect we can find good $h_j$. The drawback of this is that computation complexity of LLL is high if too many $g_i$ are involved.
@@ -414,10 +414,10 @@ The code imports the following functions. For details, see appendix.
 - filter_LLLresult_coppersmith(basepoly, beta, t, shiftpolys, lll, trans): output short polynomial which satisfies $\text{output}(r)=0$ over integer for solution $r$ of $\text{basepoly}(r)=0 \pmod{b}$. This function only output polynomials with L1 norm $<b^t$
 - rootfind_ZZ(pollst, bounds): find solution of pollst over integer on specific bounds
 
-Above algorithm, we need to input basepoly, bounds, $\beta$.  Choosing $\beta$ is needed for checking L1 norm $<b^t$ (Since $b$ is unknown, it uses ${N^{\beta t}}$ instead). I suggests the following $\beta$ choosing for confirming $N^\beta <= b$:
+Above algorithm, we need to input basepoly, bounds, $\beta$.  Choosing $\beta$ is needed for checking L1 norm $<b^t$ (Since $b$ is unknown, it uses ${N^{\beta t}}$ instead). I suggests the following $\beta$ choosing for confirming $N^\beta \le b$:
 
 - If $b=N$, then choose $\beta=1.0$
-- If $b=p$ such as $p|N$, then choose $(\text{bitsize}(p)-1)/(\text{bitsize}(N))$
+- If $b=p$ such as $p\mid N$, then choose $(\text{bitsize}(p)-1)/(\text{bitsize}(N))$
 
 I used to use $\beta=0.5, 0.499, \ldots$ for $N=p q$ with same bitsize of $p,q$ in Sagemath small_roots input. In fact, for 2048bit $N$, $(\text{bitsize}(p)-1)/(\text{bitsize}(N))=0.4995$. Note that zncoppersmith function on Pari/GP expects input as $P$ (basepoly over integer), $N$, $X$ (bounds), $B=N^\beta$.
 
@@ -622,10 +622,10 @@ Then, I restate what we want to solve. Let $N=p q$ be a 1024 bit integer. We hav
 For the sake of this oracle, we know $L$-digits $u1,u2$, and we need to solve the following equation:
 
 $$
-(u1 (10^{\text{Ludown}})+y)^2 - (u2 (10^{\text{Lu2down}})+x) = 0 \pmod N
+(u1\cdot (10^{\text{Ludown}})+y)^2 - (u2\cdot (10^{\text{Lu2down}})+x) = 0 \pmod N
 $$
 
-, where $x,y$ are small ($<=10^{\text{Ludown}}, 10^{\text{Lu2down}}$). ($\text{Ludown}, \text{Lu2down} \le 108$ digits or about 359 bits)
+, where $x,y$ are small ($\le 10^{\text{Ludown}}, 10^{\text{Lu2down}}$). ($\text{Ludown}, \text{Lu2down} \le 108$ digits or about 359 bits)
 
 As I just stated the proposition on general case section, we may solve this type of equation if $\log_2{Y},\log_2{X}<1024/3=341$ bits for $\beta=1.0$. I just say it solve ALMOST, but not.
 
@@ -644,7 +644,7 @@ f^2\\
 = u^2 + 2 a y u + (a^2+2 b) u + a^2 x + 2 a b y + b^2
 $$
 
-Also, $y*f = y u + a u + a x + b y$.
+Also, $y f = y u + a u + a x + b y$.
 
 Then, we construct the lattice $L$ with monomials $U^2, Y U, U, X, Y, 1$. These shift polynomials are $f^2, y f N, f N, x N^2, y N^2, N^2$:
 
