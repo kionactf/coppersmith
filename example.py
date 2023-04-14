@@ -23,7 +23,7 @@ def example_onevariable_linear():
     beta = (1.0*(bitsize//2-1))/bitsize # (1024-1)/2048 >= 0.4995 (also 511/1024 >=0.499)
 
     # in my exp, worked for 500, but took much time...
-    discardbitsizelst = [40, 256, 496]
+    discardbitsizelst = [40, 256, 488]
     for discardbitsize in discardbitsizelst:
         print(discardbitsize)
         p0 = p>>discardbitsize
@@ -190,7 +190,8 @@ def example_multivariate_heuristic():
     _example_multivariate_heuristic_3()
 
 
-#example_onevariable_linear()
-#example_twovariable_linear()
-#example_threevariable_linear()
-example_multivariate_heuristic()
+if __name__ == '__main__':
+    example_onevariable_linear()
+    example_twovariable_linear()
+    example_threevariable_linear()
+    example_multivariate_heuristic()

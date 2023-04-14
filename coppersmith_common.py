@@ -43,7 +43,9 @@ def genmatrix_from_shiftpolys(shiftpolys, bounds):
 
 
 def do_LLL(mat):
-    lll, trans = do_lattice_reduction(mat, algorithm=FLATTER, use_pari_kernel=True)
+    #lll, trans = do_lattice_reduction(mat, algorithm=FLATTER, use_pari_kernel=True)
+    lll, trans = do_lattice_reduction(mat, algorithm=FPLLL)
+    
     return lll, trans
 
 

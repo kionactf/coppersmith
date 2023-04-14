@@ -86,7 +86,7 @@ def solve_ZZ_symbolic_linear_internal(sol_coefs, bounds):
     logger.debug(f"end LLL")
     for i in range(trans.nrows()):
         if all([lll[i, j] == 0 for j in range(len(sol_coefs))]):
-            if int(trans[i,len(sol_coefs[0])-1]) in [1,-1]:
+            if int(trans[i,len(sol_coefs[0])-1]) in [1, -1]:
                 linsolcoef = [int(trans[i,j])*int(trans[i,len(sol_coefs[0])-1]) for j in range(len(sol_coefs[0]))]
                 logger.debug(f"linsolcoef found: {linsolcoef}")
                 linsol = []
@@ -155,7 +155,7 @@ def solve_root_triangulate(pollst, bounds):
     return result
 
 
-def solve_root_jacobian_newton_internal(pollst, startpnt):
+def solve_root_jacobian_newton_internal(pollst, startpnt, maxiternum=1024):
     # NOTE: Newton method's complexity is larger than BFGS, but for small variables Newton method converges soon.
     pollst_Q = Sequence(pollst, pollst[0].parent().change_ring(QQ))
     vars_pol = pollst_Q[0].parent().gens()
@@ -168,7 +168,6 @@ def solve_root_jacobian_newton_internal(pollst, startpnt):
         prepnt = {vars_pol[i]: 0 for i in range(len(vars_pol))}
     pnt = {vars_pol[i]: startpnt[i] for i in range(len(vars_pol))}
 
-    maxiternum = 1024
     iternum = 0
     while True:
         if iternum >= maxiternum:
@@ -234,7 +233,7 @@ def _solve_root_GF_smallp(pollst, smallp):
     return rt
 
 
-def solve_root_hensel_smallp(pollst, bounds, smallp):
+def solve_root_hensel_smallp(pollst, bounds, smallp, maxcands=800):
     logger.info("start solve_root_hensel")
     st = time.time()
 
@@ -250,7 +249,7 @@ def solve_root_hensel_smallp(pollst, bounds, smallp):
             rt_up = _solve_root_GF_smallp(nextpollst, smallp)
             cur_rt_low += [tuple([smallp**smallp_exp*rt_upele[i] + rt_low[i] for i in range(len(rt_low))]) for rt_upele in rt_up]
         rt_lows = list(set(cur_rt_low))
-        if len(rt_lows) >= 800:
+        if len(rt_lows) >= maxcands:
             logger.warning("too much root candidates found")
             return None
 

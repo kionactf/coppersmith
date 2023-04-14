@@ -6,6 +6,12 @@ from re import sub as re_sub
 import time
 import traceback
 
+# NTL (some code is copied from https://github.com/sagemath/sage/blob/develop/src/sage/matrix/matrix_integer_dense.pyx)
+import sage.libs.ntl.all
+import sage.libs.ntl.ntl_mat_ZZ
+ntl_ZZ = sage.libs.ntl.all.ZZ
+ntl_mat = lambda A_: sage.libs.ntl.ntl_mat_ZZ.ntl_mat_ZZ(A_.nrows(), A_.ncols(), [ntl_ZZ(z) for z in A_.list()])
+
 from logger import logger
 
 
@@ -44,13 +50,17 @@ def _fplllmatrix_to_sagematrix(matrixstr: str) -> matrix:
     return matrix(ZZ, matlist)
 
 
-def _transformation_matrix(mat, lllmat, use_pari_kernel=True):
+def _transformation_matrix(mat, lllmat, use_pari_matsol=False):
     # pari.matker() does not assure smallest kernel in Z (seems not call hermite normal form)
     # Sage kernel calls hermite normal form
     #
     # for computing ZZ transformation, use pari.matker, pari.matsolvemod
     # assume first kerdim vectors for lllmat are zero vector
-    if use_pari_kernel:
+    #
+    # anyway, transformation computation after LLL/BKZ is slow.
+    # instead, use builtin transformation computation on LLL/BKZ package
+
+    if use_pari_matsol:
         mat_pari = pari.matrix(mat.nrows(), mat.ncols(), mat.list())
         ker_pari_t = pari.matker(pari.mattranspose(mat_pari), 1)
         kerdim = len(ker_pari_t)
@@ -105,53 +115,56 @@ def _xgcd_list(intlst: List[int]) -> Tuple[int, List[int]]:
 
 def do_LLL_fplll(
         mat: matrix,
-        use_siegel : int = True, fplll_version : str = WRAPPER, early_reduction : bool = True,
-        use_pari_kernel : bool = True
+        use_siegel: int = True, fplll_version: str = WRAPPER, early_reduction: bool = True
     ) -> Tuple[matrix, matrix]:
     matstr = _from_sagematrix_to_fplllmatrix(mat)
     if early_reduction:
         result = subprocess_run(
-            ['./fplll', '-l', str(1-int(use_siegel)), '-m', fplll_version, '-y'],
+            ['./fplll', '-l', str(1-int(use_siegel)), '-m', fplll_version, '-y', '-of', 'u'],
             input=matstr.encode(), cwd=fplll_path, capture_output=True
         )
     else:
         result = subprocess_run(
-            ['./fplll', '-l', str(1-int(use_siegel)), '-m', fplll_version],
+            ['./fplll', '-l', str(1-int(use_siegel)), '-m', fplll_version, '-of', 'u'],
             input=matstr.encode(), cwd=fplll_path, capture_output=True
         )
     if result.returncode != 0:
         print(result.stderr)
         raise ValueError(f"LLL failed with return code {result.returncode}")
-    lllmat = _fplllmatrix_to_sagematrix(result.stdout.decode().strip())
-    trans = _transformation_matrix(mat, lllmat, use_pari_kernel=use_pari_kernel)
+    
+    trans = _fplllmatrix_to_sagematrix(result.stdout.decode().strip())
+    lllmat = trans * mat
+
     return lllmat, trans
 
 
 def do_BKZ_fplll(
         mat: matrix,
-        blocksize : int = 10, bkzautoabort : bool = True, use_pari_kernel : bool = True
+        blocksize: int = 10, bkzautoabort: bool = True
     ) -> Tuple[matrix, matrix]:
     matstr = _from_sagematrix_to_fplllmatrix(mat)
     if bkzautoabort:
         result = subprocess_run(
-            ['./fplll', '-a', 'bkz', '-b', str(blocksize), '-bkzautoabort'],
+            ['./fplll', '-a', 'bkz', '-b', str(blocksize), '-bkzautoabort', '-of', 'u'],
             input=matstr.encode(), cwd=fplll_path, capture_output=True
         )
     else:
         result = subprocess_run(
-            ['./fplll', '-a', 'bkz', '-b', str(blocksize)],
+            ['./fplll', '-a', 'bkz', '-b', str(blocksize), '-of', 'u'],
             input=matstr.encode(), cwd=fplll_path, capture_output=True
         )
     if result.returncode != 0:
         print(result.stderr)
         raise ValueError(f"LLL failed with return code {result.returncode}")
-    lllmat = _fplllmatrix_to_sagematrix(result.stdout.decode().strip())
-    trans = _transformation_matrix(mat, lllmat, use_pari_kernel=use_pari_kernel)
+    
+    trans = _fplllmatrix_to_sagematrix(result.stdout.decode().strip())
+    lllmat = trans * mat
+
     return lllmat, trans
 
 
 def do_LLL_flatter(
-        mat: matrix, use_pari_kernel: bool = True
+        mat: matrix, use_pari_kernel: bool = True, use_pari_matsol: bool = False
     ) -> Tuple[matrix, matrix]:
 
     kerproc_st = time.time()
@@ -250,7 +263,7 @@ def do_LLL_flatter(
             raise ValueError(f"LLL failed with return code {result.returncode}")
         lllmat = _fplllmatrix_to_sagematrix(result.stdout.decode().strip())
 
-    trans = _transformation_matrix(Hsub, lllmat, use_pari_kernel=use_pari_kernel)
+    trans = _transformation_matrix(Hsub, lllmat, use_pari_matsol=use_pari_matsol)
 
     restrows = mat.nrows() - lllmat.nrows()
     final_lllmat = zero_matrix(ZZ, restrows, lllmat.ncols()).stack(lllmat)
@@ -264,19 +277,39 @@ def do_LLL_flatter(
     return final_lllmat, final_trans
 
 
-def do_LLL_NTL(mat: matrix, use_pari_kernel: bool = True) -> Tuple[matrix, matrix]:
-    lllmat = mat.LLL(algorithm="NTL:LLL")
-    trans = _transformation_matrix(mat, lllmat, use_pari_kernel=use_pari_kernel)
+def do_LLL_NTL(mat: matrix) -> Tuple[matrix, matrix]:
+    delta_lll = ZZ(99)/ZZ(100)
+    a_lll = delta_lll.numer()
+    b_lll = delta_lll.denom()
+
+    A = ntl_mat(mat)
+
+    # TODO: support various floating point precision, and use_givens option
+    r, det2, U = A.LLL(a_lll, b_lll, return_U=True)
+
+    lllmat = matrix(ZZ, mat.nrows(), mat.ncols(), [ZZ(z) for z in A.list()])
+    trans = matrix(ZZ, mat.nrows(), mat.nrows(), [ZZ(z) for z in U.list()])
+
     return lllmat, trans
 
 
 def do_BKZ_NTL(
         mat: matrix,
-        blocksize : int = 10, prune : int = 0, use_pari_kernel: bool = True
+        blocksize: int = 10, prune: int = 0
     ) -> Tuple[matrix, matrix]:
-    lllmat = mat.BKZ(algorithm="NTL", block_size=blocksize, prune=prune)
-    trans = _transformation_matrix(mat, lllmat, use_pari_kernel=use_pari_kernel)
+
+    delta_lll = 0.99
+    A = ntl_mat(mat)
+    U = ntl_mat(identity_matrix(ZZ, A.nrows()))
+
+    # TODO: support various floating point precision, and use_givens option
+    r = A.BKZ_RR(U=U, delta=delta_lll, BlockSize=blocksize, prune=prune)
+
+    lllmat = matrix(ZZ, mat.nrows(), mat.ncols(), [ZZ(z) for z in A.list()])
+    trans = matrix(ZZ, mat.nrows(), mat.nrows(), [ZZ(z) for z in U.list()])
+
     return lllmat, trans
+
 
 
 ## wrapper function
@@ -346,7 +379,11 @@ def test():
         for testlstele in testlst:
             curmat = matrix(ZZ, testlstele[1])
             try:
-                lll, trans = LLL_algorithm_dict[LLL_algorithm](curmat, use_pari_kernel=False)
+                if LLL_algorithm == FLATTER:
+                    lll, trans = LLL_algorithm_dict[LLL_algorithm](curmat, use_pari_kernel=False)
+                    #lll, trans = LLL_algorithm_dict[LLL_algorithm](curmat, use_pari_kernel=True)
+                else:
+                    lll, trans = LLL_algorithm_dict[LLL_algorithm](curmat)
             except:
                 traceback.print_exc()
                 continue
