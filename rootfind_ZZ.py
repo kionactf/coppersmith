@@ -208,6 +208,7 @@ def solve_root_jacobian_newton(pollst, bounds):
         return []
 
     for _ in range(10):
+        # pollst is not always algebraically independent, so just randomly choose with hoping to obtain an algebraically independent set
         random_shuffle(pollst_local)
         for signs in itertools_product([1, -1], repeat=len(vars_pol)):
             startpnt = [signs[i] * bounds[i] for i in range(len(vars_pol))]
