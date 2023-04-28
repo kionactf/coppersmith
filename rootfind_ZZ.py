@@ -3,8 +3,10 @@ from sage.all import *
 from random import shuffle as random_shuffle
 from itertools import product as itertools_product
 import time
+import traceback
 
 from logger import logger
+from lll import do_lattice_reduction, FPLLL, FPLLL_BKZ, FLATTER, NTL, NTL_BKZ
 
 
 def solve_root_onevariable(pollst, bounds):
@@ -82,7 +84,7 @@ def solve_ZZ_symbolic_linear_internal(sol_coefs, bounds):
     mat = matrix(ZZ, len(sol_coefs)+len(bounds)+1, len(sol_coefs[0])+len(bounds), matele)
     logger.debug(f"start LLL for solve_ZZ_symbolic_linear_internal")
     mattrans = mat.transpose()
-    lll, trans = mattrans.LLL(transformation=True)
+    lll, trans = do_lattice_reduction(mattrans, algorithm=FPLLL)
     logger.debug(f"end LLL")
     for i in range(trans.nrows()):
         if all([lll[i, j] == 0 for j in range(len(sol_coefs))]):
@@ -110,6 +112,7 @@ def solve_root_triangulate(pollst, bounds):
     try:
         sols = solve([G_ele(*symbolic_vars) for G_ele in G], symbolic_vars, solution_dict=True)
     except:
+        traceback.print_exc()
         return None
 
     logger.debug(f"found sol on triangulate: {sols}")
