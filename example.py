@@ -37,8 +37,8 @@ def example_onevariable_linear():
         print(f"result:{result}, real:{p % (2**discardbitsize)}")
 
         # check output of sage small_roots
-        if discardbitsize >= 490:
-            epsilon = 0.01
+        if discardbitsize >= 488:
+            epsilon = 0.02
         else:
             epsilon = 0.05
 
@@ -48,7 +48,7 @@ def example_onevariable_linear():
         logger.debug("sage comp elapsed time: %f", sage_ed - sage_st)
 
         # sometimes works with small beta (but 488 not works)
-        print(f"sage result (small beta):{f.small_roots(X=2**discardbitsize, beta=0.4)}")
+        print(f"sage result (small beta):{f.small_roots(X=2**discardbitsize, beta=0.1)}")
 
 
 def example_twovariable_linear():

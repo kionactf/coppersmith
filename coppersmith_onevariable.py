@@ -49,7 +49,7 @@ def coppersmith_onevariable(basepoly, bounds, beta, maxmatsize=100, maxu=8):
     testimate = int(1/(((RRh(beta)**2)/delta)/log_N_X - 1))//2
 
     logger.debug("testimate: %d", testimate)
-    t = min([maxmatsize//delta, max(testimate, 3)])
+    t = min([maxmatsize//delta, max(testimate, 1)])
 
     whole_st = time.time()
 
