@@ -2,7 +2,8 @@ from sage.all import *
 
 import time
 from Crypto.Util.number import *
-from random import randrange, randint
+from random import randrange, randint, choices as random_choices
+import string
 
 from coppersmith_onevariable import coppersmith_onevariable
 from coppersmith_linear import coppersmith_linear
@@ -46,7 +47,7 @@ def example_onevariable_linear():
         sage_ed = time.time()
         logger.debug("sage comp elapsed time: %f", sage_ed - sage_st)
 
-        # sometimes works with small beta (but 496 not works)
+        # sometimes works with small beta (but 488 not works)
         print(f"sage result (small beta):{f.small_roots(X=2**discardbitsize, beta=0.4)}")
 
 
@@ -124,6 +125,62 @@ def example_threevariable_linear():
         print(f"result:{result}, real:{real}")
 
 
+def example_shortpad_attack():
+    # example of Coppersmith's short-pad attack; non-monic univariate polynomial case
+    bitsize = 2048
+    padbytelen = 24
+    while True:
+        p = getPrime(bitsize//2)
+        q = getPrime(bitsize//2)
+        N = p * q
+        e = 3
+        phi = (p - 1) * (q - 1)
+        if GCD(phi, e) == 1:
+            d = pow(e, -1, phi)
+            break
+    charlist = string.ascii_uppercase + string.ascii_lowercase + string.digits
+    M = ''.join(random_choices(charlist, k=115)) + '_' + ''.join(random_choices(charlist, k=115))
+    pad = ''.join(random_choices(charlist, k=padbytelen))
+
+    M_1 = bytes_to_long((M + '\x00' * padbytelen).encode())
+    M_2 = bytes_to_long((M + pad).encode())
+
+    C_1 = pow(M_1, e, N)
+    C_2 = pow(M_2, e, N)
+
+    # attack from here
+    P_first = PolynomialRing(ZZ, 2, "xy")
+    x, y = P_first.gens()
+
+    ## x = (M + '\x00' * padbytelen), y = pad
+    pol1 = x ** e - C_1
+    pol2 = (x + y) ** e - C_2
+    pol = pol1.resultant(pol2, x)
+
+    pol_uni = pol.univariate_polynomial().change_ring(Zmod(N))
+    sol = coppersmith_onevariable(pol_uni, [2**(8*padbytelen)], 1.0)[0]
+
+    ## Franklin-Reiter related-message attack
+    pol1_uni = pol1.univariate_polynomial().change_ring(Zmod(N))
+    pol2_uni = pol2.subs({x:x, y:sol}).univariate_polynomial().change_ring(Zmod(N))
+
+    def composite_gcd(f1, f2):
+        if f2 == 0:
+            return f1.monic()
+        if f1.degree() < f2.degree():
+            return composite_gcd(f2, f1)
+        return composite_gcd(f2, f1 % f2)
+
+    pol_gcd = composite_gcd(pol1_uni, pol2_uni)
+    assert pol_gcd.degree() == 1
+
+    degoneinv = (pol_gcd.monomial_coefficient(pol_gcd.parent().gens()[0]) ** (-1))
+    found_M_N = -pol_gcd.constant_coefficient() * degoneinv
+    found_M = long_to_bytes(int(found_M_N.lift())).split(b'\x00')[0]
+
+    print(f"result:{found_M}, real:{M}")
+
+
 def _example_multivariate_heuristic_1():
     # from bivariate_example on https://github.com/josephsurin/lattice-based-cryptanalysis/blob/main/examples/problems/small_roots.sage
     N = random_prime(2**512) * random_prime(2**512)
@@ -194,4 +251,5 @@ if __name__ == '__main__':
     example_onevariable_linear()
     example_twovariable_linear()
     example_threevariable_linear()
+    example_shortpad_attack()
     example_multivariate_heuristic()

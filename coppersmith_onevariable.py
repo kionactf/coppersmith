@@ -11,7 +11,7 @@ from logger import logger
 def coppersmith_one_var_core(basepoly, bounds, beta, t, u, delta):
     logger.info("trying param: beta=%f, t=%d, u=%d, delta=%d", beta, t, u, delta)
     basepoly_vars = basepoly.parent().gens()
-    basepoly = basepoly / basepoly.monomial_coefficient(basepoly_vars[0])
+    basepoly = basepoly / basepoly.monomial_coefficient(basepoly_vars[0] ** delta)
 
     shiftpolys = []
     for i in range(u-1, -1, -1):
