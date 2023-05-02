@@ -68,7 +68,12 @@ def solve_root_groebner(pollst, bounds):
 
 
 def solve_ZZ_symbolic_linear_internal(sol_coefs, bounds):
+    # solve X_i = sum( (a_ij/b_ij)*v_j for j) for (a_ij/b_ij) in sol_coefs, |X_i| < bounds[i] (v_j: variable)
+
+    ## for scaling lattice value
     mult = prod(bounds)
+
+    ## construct equation (row vectors: [v_j for j] + [X_i for i] + [1])
     matele = []
     for i, sol_coef in enumerate(sol_coefs):
         denom = 1
@@ -76,16 +81,23 @@ def solve_ZZ_symbolic_linear_internal(sol_coefs, bounds):
             denom = LCM(denom, sol_coef_ele.denominator())
         for sol_coef_ele in sol_coef:
             matele.append(ZZ(sol_coef_ele * denom * mult))
-        matele += [0]*i + [-mult*denom] + [0] * (len(bounds)-i-1)
+        matele += [0]*i + [-denom * mult] + [0]*(len(bounds)-i-1)
+
+    ## constrain to bounds (|X_i| < bounds[i])
     for idx, bd in enumerate(bounds):
-        matele += [0]*len(sol_coefs[0]) + [0] * idx + [mult//bd] + [0]*(len(bounds)-idx-1)
-    # const term
+        matele += [0]*len(sol_coefs[0]) + [0]*idx + [mult//bd] + [0]*(len(bounds)-idx-1)
+
+    ## constrain to const (kannan embedding)
     matele += [0]*(len(sol_coefs[0])-1) + [mult] + [0]*len(bounds)
+
+    ## BKZ (assume the number of variables are small)
     mat = matrix(ZZ, len(sol_coefs)+len(bounds)+1, len(sol_coefs[0])+len(bounds), matele)
     logger.debug(f"start LLL for solve_ZZ_symbolic_linear_internal")
     mattrans = mat.transpose()
-    lll, trans = do_lattice_reduction(mattrans, algorithm=FPLLL)
+    lll, trans = do_lattice_reduction(mattrans, algorithm=FPLLL_BKZ)
     logger.debug(f"end LLL")
+
+    ## search solution
     for i in range(trans.nrows()):
         if all([lll[i, j] == 0 for j in range(len(sol_coefs))]):
             if int(trans[i,len(sol_coefs[0])-1]) in [1, -1]:
@@ -211,7 +223,8 @@ def solve_root_jacobian_newton(pollst, bounds):
         return []
 
     for _ in range(10):
-        # pollst is not always algebraically independent, so just randomly choose with hoping to obtain an algebraically independent set
+        # pollst is not always algebraically independent,
+        # so just randomly choose wishing to obtain an algebraically independent set
         random_shuffle(pollst_local)
         for signs in itertools_product([1, -1], repeat=len(vars_pol)):
             startpnt = [signs[i] * bounds[i] for i in range(len(vars_pol))]
@@ -301,3 +314,4 @@ def rootfind_ZZ(pollst, bounds):
         # last triangulate with groebner (slow, but sometimes solve when above methods does not work)
         #return solve_root_groebner(pollst, bounds)
         return solve_root_triangulate(pollst, bounds)
+
