@@ -314,4 +314,3 @@ def rootfind_ZZ(pollst, bounds):
         # last triangulate with groebner (slow, but sometimes solve when above methods does not work)
         #return solve_root_groebner(pollst, bounds)
         return solve_root_triangulate(pollst, bounds)
-

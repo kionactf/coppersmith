@@ -131,7 +131,7 @@ def do_LLL_fplll(
     if result.returncode != 0:
         print(result.stderr)
         raise ValueError(f"LLL failed with return code {result.returncode}")
-    
+
     trans = _fplllmatrix_to_sagematrix(result.stdout.decode().strip())
     lllmat = trans * mat
 
@@ -156,7 +156,7 @@ def do_BKZ_fplll(
     if result.returncode != 0:
         print(result.stderr)
         raise ValueError(f"LLL failed with return code {result.returncode}")
-    
+
     trans = _fplllmatrix_to_sagematrix(result.stdout.decode().strip())
     lllmat = trans * mat
 
@@ -309,7 +309,6 @@ def do_BKZ_NTL(
     trans = matrix(ZZ, mat.nrows(), mat.nrows(), [ZZ(z) for z in U.list()])
 
     return lllmat, trans
-
 
 
 ## wrapper function

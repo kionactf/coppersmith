@@ -35,7 +35,10 @@ def coppersmith_linear_core(basepoly, bounds, beta, t, m):
 
 def coppersmith_linear(basepoly, bounds, beta, maxmatsize=100, maxm=8):
     if type(bounds) not in [list, tuple]:
-        raise ValueError("not linear polynomial (on coppersmith_linear)")
+        raise ValueError("bounds should be list or tuple")
+
+    if beta >= 1.0:
+        raise ValueError("beta is invalid. (for beta=1.0, use normal lattice reduction method directly.)")
 
     N = basepoly.parent().characteristic()
 
@@ -43,10 +46,10 @@ def coppersmith_linear(basepoly, bounds, beta, maxmatsize=100, maxm=8):
     n = len(basepoly_vars)
     if n == 1:
         raise ValueError("one variable poly")
-    
+
     if not set(basepoly.monomials()).issubset(set(list(basepoly_vars)+[1])):
         raise ValueError("non linear poly")
-    
+
     log_N_X = RRh(log(product(bounds), N))
     log_N_X_bound = 1-(1-RRh(beta))**(RRh(n+1)/n) - (n+1)*(1-(1-RRh(beta))**(RRh(1)/n)) * (1-RRh(beta))
 

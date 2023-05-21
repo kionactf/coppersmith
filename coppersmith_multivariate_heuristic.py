@@ -73,7 +73,7 @@ def coppersmith_multivariate_heuristic_core(basepoly, bounds, beta, t, d, lm, ma
 
 def coppersmith_multivariate_heuristic(basepoly, bounds, beta, maxmatsize=100, maxd=8):
     if type(bounds) not in [list, tuple]:
-        raise ValueError("not linear polynomial (on coppersmith_linear)")
+        raise ValueError("bounds should be list or tuple")
 
     N = basepoly.parent().characteristic()
 
