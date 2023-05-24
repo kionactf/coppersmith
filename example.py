@@ -181,7 +181,38 @@ def example_shortpad_attack():
     print(f"result:{found_M}, real:{M}")
 
 
+def example_chronophobia():
+    # chronophobia from idekCTF2022
+    L = 200
+
+    p = getPrime(512)
+    q = getPrime(512)
+    n = p*q
+    phi = (p-1) * (q-1)
+
+    t = randint(0, n-1)
+    d = randint(128, 256)
+    r = pow(2, 1 << d, phi)
+
+    ans1 = pow(t, r, n)
+    u1 = int(str(ans1)[:L])
+    L1down = len(str(ans1)[L:])
+    ans2 = pow(pow(t, 2, n), r, n)
+    u2 = int(str(ans2)[:L])
+    L2down = len(str(ans2)[L:])
+
+    P = PolynomialRing(Zmod(n), 2, ["x", "y"])
+    x, y = P.gens()
+
+    f = (u1 * (10**L1down) + x)**2 - (u2 * (10**L2down) + y)
+    bounds = [10**L1down, 10**L2down]
+
+    sol = coppersmith_multivariate_heuristic(f, bounds, 1.0)
+    print(f"result:{sol}, real:{(str(ans1)[L:], str(ans2)[L:])}")
+
+
 def example_bivariate_stereotyped_message_attack():
+    # @Warri posted to cryptohack discord channel (#cryptography, May.23, 2023)
     bitsize = 1024
     part_M_first_size = 14
     part_M_second_size = 15
@@ -255,40 +286,11 @@ def _example_multivariate_heuristic_2():
     print(f"result:{sol}, real:{roots}")
 
 
-def _example_multivariate_heuristic_3():
-    # chronophobia from idekCTF2022
-    L = 200
-
-    p = getPrime(512)
-    q = getPrime(512)
-    n = p*q
-    phi = (p-1) * (q-1)
-
-    t = randint(0, n-1)
-    d = randint(128, 256)
-    r = pow(2, 1 << d, phi)
-
-    ans1 = pow(t, r, n)
-    u1 = int(str(ans1)[:L])
-    L1down = len(str(ans1)[L:])
-    ans2 = pow(pow(t, 2, n), r, n)
-    u2 = int(str(ans2)[:L])
-    L2down = len(str(ans2)[L:])
-
-    P = PolynomialRing(Zmod(n), 2, ["x", "y"])
-    x, y = P.gens()
-
-    f = (u1 * (10**L1down) + x)**2 - (u2 * (10**L2down) + y)
-    bounds = [10**L1down, 10**L2down]
-
-    sol = coppersmith_multivariate_heuristic(f, bounds, 1.0)
-    print(f"result:{sol}, real:{(str(ans1)[L:], str(ans2)[L:])}")
 
 
 def example_multivariate_heuristic():
     _example_multivariate_heuristic_1()
     _example_multivariate_heuristic_2()
-    _example_multivariate_heuristic_3()
 
 
 if __name__ == '__main__':
@@ -297,4 +299,5 @@ if __name__ == '__main__':
     example_threevariable_linear()
     example_shortpad_attack()
     example_multivariate_heuristic()
+    example_chronophobia()
     example_bivariate_stereotyped_message_attack()
