@@ -181,6 +181,50 @@ def example_shortpad_attack():
     print(f"result:{found_M}, real:{M}")
 
 
+def example_bivariate_stereotyped_message_attack():
+    bitsize = 1024
+    part_M_first_size = 14
+    part_M_second_size = 15
+    while True:
+        p = getPrime(bitsize//2)
+        q = getPrime(bitsize//2)
+        N = p * q
+        e = 3
+        phi = (p - 1) * (q - 1)
+        if GCD(phi, e) == 1:
+            d = pow(e, -1, phi)
+            break
+    charlist = string.ascii_uppercase + string.ascii_lowercase + string.digits
+    part_M_first = ''.join(random_choices(charlist, k=part_M_first_size))
+    part_M_second = ''.join(random_choices(charlist, k=part_M_second_size))
+    prefix = ''.join(random_choices(charlist, k=40))
+    midfix = ''.join(random_choices(charlist, k=30))
+    suffix = ''.join(random_choices(charlist, k=20))
+
+    M = bytes_to_long(
+        (prefix + part_M_first + midfix + part_M_second + suffix).encode()
+    )
+    C = pow(M, e, N)
+
+    # attack from here
+    P = PolynomialRing(Zmod(N), 2, "xy")
+    x, y = P.gens()
+
+    f_p = bytes_to_long(suffix.encode())
+    f_p += y * (2**(8*len(suffix)))
+    f_p += bytes_to_long(midfix.encode()) * (2**(8*(part_M_second_size + len(suffix))))
+    f_p += x * (2**(8*(len(midfix) + part_M_second_size + len(suffix))))
+    f_p += bytes_to_long(prefix.encode()) * (2**(8*(part_M_first_size + len(midfix) + part_M_second_size + len(suffix))))
+    f = f_p ** e - C
+
+    bounds = (2**(8*part_M_first_size), 2**(8*part_M_second_size))
+    sol = coppersmith_multivariate_heuristic(f, bounds, 1.0)
+
+    found_part_M_first = long_to_bytes(int(sol[0][0]))
+    found_part_M_second = long_to_bytes(int(sol[0][1]))
+    print(f"result:{(found_part_M_first, found_part_M_second)}, real:{(part_M_first, part_M_second)}")
+
+
 def _example_multivariate_heuristic_1():
     # from bivariate_example on https://github.com/josephsurin/lattice-based-cryptanalysis/blob/main/examples/problems/small_roots.sage
     N = random_prime(2**512) * random_prime(2**512)
@@ -253,3 +297,4 @@ if __name__ == '__main__':
     example_threevariable_linear()
     example_shortpad_attack()
     example_multivariate_heuristic()
+    example_bivariate_stereotyped_message_attack()

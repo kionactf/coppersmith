@@ -85,6 +85,12 @@ def coppersmith_multivariate_heuristic(basepoly, bounds, beta, maxmatsize=100, m
     # dealing with all candidates of leading monomials
     lms = gen_set_leading_monomials(basepoly)
 
+    basepoly_ZZ_vars = basepoly.change_ring(ZZ).parent().gens()
+    estimated_bound_size = prod(lms).change_ring(ZZ).subs({basepoly_ZZ_vars[i]: bounds[i] for i in range(len(basepoly_ZZ_vars))})
+    estimated_bound_rate = RRh(estimated_bound_size) / (RRh(N)**RRh(beta))
+    if estimated_bound_rate > RRh(1.0):
+        logger.warning("It seems estimated bound rate is large (%f) (heuristic estimation, so go ahead)", float(estimated_bound_rate))
+
     t = 2
 
     whole_st = time.time()
