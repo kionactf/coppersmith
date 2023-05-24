@@ -77,7 +77,7 @@ def coppersmith_linear(basepoly, bounds, beta, maxmatsize=100, maxm=8):
     while True:
         m0 = int(t/tau+0.5)
         if binomial(n+1+m0-1, m0) > maxmatsize:
-            raise ValueError("maxmatsize exceeded(on coppersmith_linear)")
+            raise ValueError(f"maxmatsize exceeded: {binomial(n+1+m0-1, m0)}")
         for m_diff in range(0, maxm+1):
             m = m0 + m_diff
             if binomial(n+1+m-1, m) > maxmatsize:

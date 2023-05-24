@@ -56,7 +56,7 @@ def coppersmith_onevariable(basepoly, bounds, beta, maxmatsize=100, maxu=8):
     curfoundpols = []
     while True:
         if t*delta > maxmatsize:
-            raise ValueError("maxmatsize exceeded(on coppersmith_one_var)")
+            raise ValueError(f"maxmatsize exceeded: {t*delta}")
         u0 = max([int((t+1)/RRh(beta) - t*delta), 0])
         for u_diff in range(0, maxu+1):
             u = u0 + u_diff

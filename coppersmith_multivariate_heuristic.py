@@ -63,7 +63,7 @@ def coppersmith_multivariate_heuristic_core(basepoly, bounds, beta, t, d, lm, ma
 
     mat = genmatrix_from_shiftpolys(shiftpolys, bounds)
     if mat.ncols() > maxmatsize:
-        logger.warning("maxmatsize exceeded(on coppersmith_multivariate_heuristic)")
+        logger.warning("maxmatsize exceeded: %d", mat.ncols())
         return []
 
     lll, trans = do_LLL(mat)
