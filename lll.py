@@ -12,6 +12,8 @@ import sage.libs.ntl.ntl_mat_ZZ
 ntl_ZZ = sage.libs.ntl.all.ZZ
 ntl_mat = lambda A_: sage.libs.ntl.ntl_mat_ZZ.ntl_mat_ZZ(A_.nrows(), A_.ncols(), [ntl_ZZ(z) for z in A_.list()])
 
+from fpylll import IntegerMatrix, GSO, Pruning, Enumeration
+
 from logger import logger
 
 
@@ -357,6 +359,33 @@ def babai(mat: matrix, target: vector, algorithm: int = FLATTER, **kwds) -> Tupl
     sol_approx_ZZ_lst = [ZZ(QQ(sol_QQ_ele).round()) for sol_QQ_ele in sol_QQ.list()]
     sol_approx_ZZ = vector(ZZ, len(sol_approx_ZZ_lst), sol_approx_ZZ_lst)
     return target - sol_approx_ZZ * lll, sol_approx_ZZ * trans
+
+
+def enumeration(mat: matrix, bound: int, target: vector = None, algorithm: int = FLATTER, **kwds):
+    """
+    Enumeration (SVP or CVP)
+    input: (mat, target, **kwds)
+            - mat: lattice representation matrix for LLL/BKZ reduction
+            - target: None for SVP, target integer vector for solving close point in lattice for CVP
+              bound: expected norm size estimation as bound = sqrt((L2-norm**2) / size)
+            - algorithm: int value which specify which algorithm will be used
+              (FPLLL, FPLLL_BKZ, FLATTER, NTL, NTL_BKZ)
+    output: enumeration generator
+    """
+    lll, trans = do_lattice_reduction(mat, algorithm, **kwds)
+    lllele = []
+    for i in range(0, lll.nrows()):
+        lllele.append(lll[i].list())
+    lll_fpylll = IntegerMatrix.from_matrix(lllele)
+    MG = GSO.Mat(lll_fpylll)
+    MG.update_gso()
+    enum = Enumeration(MG)
+    size = lll.ncols()
+    answers = enum.enumerate(0, size, size * (bound ** 2), 0, target=target, pruning=None)
+    for _, s in answers:
+        v = vector(ZZ, size, list(map(int, s)))
+        enumresult = v * trans
+        yield (enumresult * mat, enumresult)
 
 
 def test():

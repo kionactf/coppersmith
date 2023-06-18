@@ -110,6 +110,53 @@ def solve_ZZ_symbolic_linear_internal(sol_coefs, bounds):
     return []
 
 
+def solve_ZZ_symbolic_linear_near_bounds_internal(sol_coefs, bounds):
+    # solve X_i = sum( (a_ij/b_ij)*v_j for j) for (a_ij/b_ij) in sol_coefs, |X_i| < bounds[i] (v_j: variable)
+
+    ## for scaling lattice value
+    mult = prod(bounds)
+
+    linsollst = []
+    for signs in itertools_product([1, -1], repeat=len(bounds)):
+        targetpnt = [signs[i] * bounds[i] for i in range(len(bounds))]
+
+        ## construct equation (row vectors: [v_j for j] + [X_i for i] + [1])
+        matele = []
+        for i, sol_coef in enumerate(sol_coefs):
+            denom = 1
+            for sol_coef_ele in sol_coef:
+                denom = LCM(denom, sol_coef_ele.denominator())
+            for sol_coef_ele in sol_coef:
+                matele.append(ZZ(sol_coef_ele * denom * mult))
+            matele += [0]*i + [-denom * mult] + [0]*(len(bounds)-i-1)
+
+        ## constrain to bounds (|X_i| < bounds[i])
+        for idx, pntele in enumerate(targetpnt):
+            matele += [0]*(len(sol_coefs[0])-1) + [(mult//bounds[idx]) * -pntele] + [0]*idx + [mult//bounds[idx]] + [0]*(len(bounds)-idx-1)
+
+        ## constrain to const (kannan embedding)
+        matele += [0]*(len(sol_coefs[0])-1) + [mult] + [0]*len(bounds)
+
+        ## BKZ (assume the number of variables are small)
+        mat = matrix(ZZ, len(sol_coefs)+len(bounds)+1, len(sol_coefs[0])+len(bounds), matele)
+        logger.debug(f"start LLL for solve_ZZ_symbolic_linear_internal")
+        mattrans = mat.transpose()
+        lll, trans = do_lattice_reduction(mattrans, algorithm=FPLLL_BKZ)
+        logger.debug(f"end LLL")
+
+        ## search solution
+        for i in range(trans.nrows()):
+            if all([lll[i, j] == 0 for j in range(len(sol_coefs))]):
+                if int(trans[i,len(sol_coefs[0])-1]) in [1, -1]:
+                    linsolcoef = [int(trans[i,j])*int(trans[i,len(sol_coefs[0])-1]) for j in range(len(sol_coefs[0]))]
+                    logger.debug(f"linsolcoef found: {linsolcoef}")
+                    linsol = []
+                    for sol_coef in sol_coefs:
+                        linsol.append(sum([ele*linsolcoef[idx] for idx, ele in enumerate(sol_coef)]))
+                    linsollst.append(linsol)
+        return linsollst
+
+
 def solve_root_triangulate(pollst, bounds):
     logger.info("start solve_root_triangulate")
     st = time.time()
@@ -162,12 +209,14 @@ def solve_root_triangulate(pollst, bounds):
             sol_coefs_ele.append(const)
 
             sol_coefs.append(sol_coefs_ele)
-        ZZsol = solve_ZZ_symbolic_linear_internal(sol_coefs, bounds)
+        #ZZsol = solve_ZZ_symbolic_linear_internal(sol_coefs, bounds)
+        ZZsol = solve_ZZ_symbolic_linear_near_bounds_internal(sol_coefs, bounds)
         result += ZZsol
 
     ed = time.time()
     logger.info("end solve_root_triangulate. elapsed %f", ed-st)
-    return result
+    # cleanup duplicated result
+    return [list(eleele) for eleele in list(set([tuple(ele) for ele in result]))]
 
 
 def solve_root_jacobian_newton_internal(pollst, startpnt, maxiternum=1024):

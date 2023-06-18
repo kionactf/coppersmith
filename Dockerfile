@@ -54,6 +54,7 @@ ENV PYTHONPATH=/home/sage/coppersmith/:$PYTHONPATH
 ## other lattice library download
 RUN mkdir collection_lattice_tools
 WORKDIR /home/sage/collection_lattice_tools
+ENV PYTHONPATH=/home/sage/collection_lattice_tools/:$PYTHONPATH
 
 # defund/coppersmith
 RUN git clone https://github.com/defund/coppersmith
@@ -74,6 +75,10 @@ ENV PYTHONPATH=/home/sage/collection_lattice_tools/crypto_attacks/:$PYTHONPATH
 RUN git clone https://github.com/rkm0959/Inequality_Solving_with_CVP
 RUN ln -s /home/sage/collection_lattice_tools/Inequality_Solving_with_CVP/solver.sage /home/sage/collection_lattice_tools/inequ_cvp_solve.sage
 ## load("/home/sage/collection_lattice_tools/inequ_cvp_solve.sage
+
+# nneonneo/pwn-stuff (including math/solvelinmod.py)
+RUN git clone https://github.com/nneonneo/pwn-stuff
+RUN ln -s /home/sage/collection_lattice_tools/pwn-stuff/math/solvelinmod.py /home/sage/collection_lattice_tools/solvelinmod.py
 
 WORKDIR /home/sage
 
