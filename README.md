@@ -73,7 +73,7 @@ The package function requires the following parameters.
 For determining $\beta$, we recommend the following guideline.
 
 - If $b$ is known, then $\beta=\log_{N}(b)$
-- If $b$ is unknown but bitsize of $b$ is known, then $\beta=(\text{bitsize}(p)-1)/(\text{bitsize}(N))$
+- If $b$ is unknown but bitsize of $b$ is known, then $\beta=(\text{bitsize}(b)-1)/(\text{bitsize}(N))$
 
 For example, $N=pq$ and $\text{bitsize}(p)=\text{bitsize}(q)$, then $\beta\simeq 0.499$.
 
