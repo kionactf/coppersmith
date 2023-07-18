@@ -61,7 +61,7 @@ See [Why we could not solve chronophobia… Analysis for Coppersmith method more
 ## How to choose parameters?
 Coppersmith small root method is to find a root of the following type equation:
 
-$$f(r_1,\ldots,r_n)=0 \pmod{b}\ (|r_i|<X_i)$$
+$f(r_1,\ldots,r_n)=0 \pmod{b}$, where $| r_i | < X_i\ (i=1,\ldots,n)$,
 for known polynomial $f(r)$ and known $N$ such that $b\ |\ N$.
 
 The package function requires the following parameters.
