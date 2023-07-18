@@ -58,6 +58,25 @@ For computing LLL, we use pari.matker for eliminating linearly dependent vectors
 
 See [Why we could not solve chronophobia… Analysis for Coppersmith method more](https://hackmd.io/pP-iS2FtSWevJBcE6MEjBg). (it might be an old article, though.)
 
+## How to choose parameters?
+Coppersmith small root method is to find a root of the following type equation:
+
+$$f(r_1,\ldots,r_n)=0 \pmod{b}\ (|r_i|<X_i)$$
+for known polynomial $f(r)$ and known $N$ such that $b\ |\ N$.
+
+The package function requires the following parameters.
+
+- basepoly: the polynomial $f(r)$ over Zmod($N$)
+- bounds: the list $[X_1,\ldots,X_n]$ whose positive integers $X_1,\ldots,X_n$
+- beta: a positive floating point number $\beta$ such that $b \ge N^\beta$
+
+For determining $\beta$, we recommend the following guideline.
+
+- If $b$ is known, then $\beta=\log_{N}(b)$
+- If $b$ is unknown but bitsize of $b$ is known, then $\beta=(\text{bitsize}(p)-1)/(\text{bitsize}(N))$
+
+For example, $N=pq$ and $\text{bitsize}(p)=\text{bitsize}(q)$, then $\beta\simeq 0.499$.
+
 ## Completeness of the Package
 
 Q: Can you solve many modulus multivariate polynomial systems by the package?
