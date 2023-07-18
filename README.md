@@ -56,7 +56,7 @@ For computing LLL, we use pari.matker for eliminating linearly dependent vectors
 
 ## Background
 
-See [Why we could not solve chronophobia… Analysis for Coppersmith method more](https://hackmd.io/pP-iS2FtSWevJBcE6MEjBg). (it might be an old article, though.)
+See [Why we could not solve chronophobia… Analysis for Coppersmith method more](https://hackmd.io/@kiona/rywwKMYjj). (it might be an old article, though.)
 
 ## How to choose parameters?
 Coppersmith small root method is to find a root of the following type equation:
