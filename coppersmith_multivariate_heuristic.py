@@ -51,7 +51,8 @@ def coppersmith_multivariate_heuristic_core(basepoly, bounds, beta, t, d, lm, ma
     basepoly_vars = basepoly.parent().gens()
     n = len(basepoly_vars)
 
-    basepoly_i = basepoly / basepoly.monomial_coefficient(lm)
+    # NOTE: for working not integral domain, write as basepoly * (1/val) (do not write as basepoly / val)
+    basepoly_i = basepoly * (1 / basepoly.monomial_coefficient(lm))
 
     M = generate_M_with_ExtendedStrategy(basepoly_i, lm, t, d)
     shiftpolys = []
