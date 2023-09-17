@@ -22,9 +22,9 @@ def coppersmith_one_var_core(basepoly, bounds, beta, t, u, delta, **lllopt):
             # x^j * f(x)^(t-i) * N^i
             shiftpolys.append(shiftpoly(basepoly, t-i, i, [j]))
 
-    mat = genmatrix_from_shiftpolys(shiftpolys, bounds)
-    lll, trans = do_LLL(mat, **lllopt)
-    result = filter_LLLresult_coppersmith(basepoly, beta, t, shiftpolys, lll, trans)
+    mat, m_lst = genmatrix_from_shiftpolys(shiftpolys, bounds)
+    lll, _ = do_LLL(mat, **lllopt)
+    result = filter_LLLresult_coppersmith(basepoly, beta, t, m_lst, lll, bounds)
     return result
 
 

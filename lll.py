@@ -117,6 +117,7 @@ def _xgcd_list(intlst: List[int]) -> Tuple[int, List[int]]:
 
 def do_LLL_fplll(
         mat: matrix,
+        transformation: bool = True,
         use_siegel: int = True, fplll_version: str = WRAPPER, early_reduction: bool = True
     ) -> Tuple[matrix, matrix]:
     matstr = _from_sagematrix_to_fplllmatrix(mat)
@@ -137,11 +138,15 @@ def do_LLL_fplll(
     trans = _fplllmatrix_to_sagematrix(result.stdout.decode().strip())
     lllmat = trans * mat
 
+    if not(transformation):
+        trans = None
+
     return lllmat, trans
 
 
 def do_BKZ_fplll(
         mat: matrix,
+        transformation: bool = True,
         blocksize: int = 10, bkzautoabort: bool = True
     ) -> Tuple[matrix, matrix]:
     matstr = _from_sagematrix_to_fplllmatrix(mat)
@@ -162,11 +167,16 @@ def do_BKZ_fplll(
     trans = _fplllmatrix_to_sagematrix(result.stdout.decode().strip())
     lllmat = trans * mat
 
+    if not(transformation):
+        trans = None
+
     return lllmat, trans
 
 
 def do_LLL_flatter(
-        mat: matrix, use_pari_kernel: bool = True, use_pari_matsol: bool = False
+        mat: matrix,
+        transformation: bool = True,
+        use_pari_kernel: bool = True, use_pari_matsol: bool = False
     ) -> Tuple[matrix, matrix]:
 
     kerproc_st = time.time()
@@ -265,21 +275,32 @@ def do_LLL_flatter(
             raise ValueError(f"LLL failed with return code {result.returncode}")
         lllmat = _fplllmatrix_to_sagematrix(result.stdout.decode().strip())
 
-    trans = _transformation_matrix(Hsub, lllmat, use_pari_matsol=use_pari_matsol)
+    if transformation:
+        trans = _transformation_matrix(Hsub, lllmat, use_pari_matsol=use_pari_matsol)
+    else:
+        trans = None
 
     restrows = mat.nrows() - lllmat.nrows()
     final_lllmat = zero_matrix(ZZ, restrows, lllmat.ncols()).stack(lllmat)
-    middle_trans = identity_matrix(ZZ, restrows).augment(zero_matrix(ZZ, restrows, trans.ncols())).stack(
-        zero_matrix(ZZ, trans.nrows(), restrows).augment(trans)
-    )
-    final_trans = middle_trans * U
-    #assert abs(final_trans.determinant()) == 1
-    #assert final_trans * mat == final_lllmat
+
+    if transformation:
+        middle_trans = identity_matrix(ZZ, restrows).augment(zero_matrix(ZZ, restrows, trans.ncols())).stack(
+            zero_matrix(ZZ, trans.nrows(), restrows).augment(trans)
+        )
+        final_trans = middle_trans * U
+        #assert abs(final_trans.determinant()) == 1
+        #assert final_trans * mat == final_lllmat
+    else:
+        final_trans = None
 
     return final_lllmat, final_trans
 
 
-def do_LLL_NTL(mat: matrix) -> Tuple[matrix, matrix]:
+def do_LLL_NTL(
+        mat: matrix,
+        transformation: bool = True
+    ) -> Tuple[matrix, matrix]:
+
     delta_lll = ZZ(99)/ZZ(100)
     a_lll = delta_lll.numer()
     b_lll = delta_lll.denom()
@@ -287,16 +308,20 @@ def do_LLL_NTL(mat: matrix) -> Tuple[matrix, matrix]:
     A = ntl_mat(mat)
 
     # TODO: support various floating point precision, and use_givens option
-    r, det2, U = A.LLL(a_lll, b_lll, return_U=True)
+    r, det2, U = A.LLL(a_lll, b_lll, return_U=transformation)
 
     lllmat = matrix(ZZ, mat.nrows(), mat.ncols(), [ZZ(z) for z in A.list()])
-    trans = matrix(ZZ, mat.nrows(), mat.nrows(), [ZZ(z) for z in U.list()])
+    if transformation:
+        trans = matrix(ZZ, mat.nrows(), mat.nrows(), [ZZ(z) for z in U.list()])
+    else:
+        trans = None
 
     return lllmat, trans
 
 
 def do_BKZ_NTL(
         mat: matrix,
+        transformation: bool = True,
         blocksize: int = 10, prune: int = 0
     ) -> Tuple[matrix, matrix]:
 
@@ -308,7 +333,10 @@ def do_BKZ_NTL(
     r = A.BKZ_RR(U=U, delta=delta_lll, BlockSize=blocksize, prune=prune)
 
     lllmat = matrix(ZZ, mat.nrows(), mat.ncols(), [ZZ(z) for z in A.list()])
-    trans = matrix(ZZ, mat.nrows(), mat.nrows(), [ZZ(z) for z in U.list()])
+    if transformation:
+        trans = matrix(ZZ, mat.nrows(), mat.nrows(), [ZZ(z) for z in U.list()])
+    else:
+        trans = None
 
     return lllmat, trans
 
@@ -353,6 +381,7 @@ def babai(mat: matrix, target: vector, algorithm: int = FLATTER, **kwds) -> Tupl
             - diff: subtract of target from lattice_point which is close for target
             - trans: transformation matrix s.t. lattice_point = trans * mat
     """
+    kwds['transformation'] = True
     lll, trans = do_lattice_reduction(mat, algorithm, **kwds)
     # gram-schmidt process is slow. use solve_left in QQ
     sol_QQ = (lll.change_ring(QQ)).solve_left((target.change_ring(QQ)))
@@ -372,6 +401,7 @@ def enumeration(mat: matrix, bound: int, target: vector = None, algorithm: int =
               (FPLLL, FPLLL_BKZ, FLATTER, NTL, NTL_BKZ)
     output: enumeration generator
     """
+    kwds['transformation'] = True
     lll, trans = do_lattice_reduction(mat, algorithm, **kwds)
     lllele = []
     for i in range(0, lll.nrows()):

@@ -39,10 +39,13 @@ def genmatrix_from_shiftpolys(shiftpolys, bounds):
         sftpol_sub_bound = sftpol.subs({vars_ZZ[i]: vars_ZZ[i]*bounds[i] for i in range(len(vars_ZZ))})
         matele += [sftpol_sub_bound.monomial_coefficient(m_lst[i]) for i in range(len(m_lst))]
     mat = matrix(ZZ, len(matele)//len(m_lst), len(m_lst), matele)
-    return mat
+    return mat, m_lst
 
 
 def do_LLL(mat, **lllopt):
+    # no transformation computation (mainly, for speeding up flatter)
+    lllopt['transformation'] = False
+
     if 'algorithm' not in lllopt:
         ## FPLLL
         lllopt['algorithm'] = FPLLL
@@ -55,15 +58,19 @@ def do_LLL(mat, **lllopt):
     return lll, trans
 
 
-def filter_LLLresult_coppersmith(basepoly, beta, t, shiftpolys, lll, trans):
+def filter_LLLresult_coppersmith(basepoly, beta, t, m_lst, lll, bounds):
+    vars_ZZ = m_lst[0].parent().gens()
     N = basepoly.parent().characteristic()
     howgrave_bound = (RRh(N)**RRh(beta))**RRh(t)
-    if len(shiftpolys) != lll.nrows() or len(shiftpolys) != trans.nrows():
+    if len(m_lst) != lll.ncols():
         raise ValueError("lll or trans result is invalid (on filter_LLLresult_coppersmith)")
     # use vector (not use matrix norm, but vector norm)
     lll_vec = lll.rows()
+
+    m_lst_bound = [m_lstele.subs({vars_ZZ[i]: bounds[i] for i in range(len(vars_ZZ))}) for m_lstele in m_lst]
+
     result = []
-    for i, lll_vecele in enumerate(lll_vec):
+    for lll_vecele in lll_vec:
         if all([int(lll_vecele_ele) == 0 for lll_vecele_ele in lll_vecele]):
             continue
         lll_l1norm = lll_vecele.norm(p=1)
@@ -72,7 +79,8 @@ def filter_LLLresult_coppersmith(basepoly, beta, t, shiftpolys, lll, trans):
         howgrave_ratio = int(((lll_l1norm/howgrave_bound)*(10**15))*(0.1**15))
         logger.debug("lll_l1norm/howgrave_bound: %s", str(howgrave_ratio) )
         pol = 0
-        for j, shiftpolysele in enumerate(shiftpolys):
-            pol += trans[i,j] * shiftpolysele
+        for j, m_lstele_bound in enumerate(m_lst_bound):
+            #assert int(lll_vecele[j]) % int(m_lstele_bound) == 0
+            pol += (int(lll_vecele[j]) // int(m_lstele_bound)) * m_lst[j]
         result.append(pol)
     return result

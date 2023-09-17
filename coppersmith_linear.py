@@ -27,9 +27,9 @@ def coppersmith_linear_core(basepoly, bounds, beta, t, m, **lllopt):
                     # x2^i2 * ... * xn^in * f^k * N^max(t-k,0)
                     shiftpolys.append(shiftpoly(basepoly_i, k, max(t-k, 0), xi_idx))
 
-    mat = genmatrix_from_shiftpolys(shiftpolys, bounds)
-    lll, trans = do_LLL(mat, **lllopt)
-    result = filter_LLLresult_coppersmith(basepoly, beta, t, shiftpolys, lll, trans)
+    mat, m_lst = genmatrix_from_shiftpolys(shiftpolys, bounds)
+    lll, _ = do_LLL(mat, **lllopt)
+    result = filter_LLLresult_coppersmith(basepoly, beta, t, m_lst, lll, bounds)
     return result
 
 

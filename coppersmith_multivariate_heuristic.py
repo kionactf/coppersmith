@@ -62,13 +62,13 @@ def coppersmith_multivariate_heuristic_core(basepoly, bounds, beta, t, d, lm, ma
             xi_idx = curmono.exponents()[0]
             shiftpolys.append(shiftpoly(basepoly_i, k, t - k, xi_idx))
 
-    mat = genmatrix_from_shiftpolys(shiftpolys, bounds)
+    mat, m_lst = genmatrix_from_shiftpolys(shiftpolys, bounds)
     if mat.ncols() > maxmatsize:
         logger.warning("maxmatsize exceeded: %d", mat.ncols())
         return []
 
-    lll, trans = do_LLL(mat, **lllopt)
-    result = filter_LLLresult_coppersmith(basepoly, beta, t, shiftpolys, lll, trans)
+    lll, _ = do_LLL(mat, **lllopt)
+    result = filter_LLLresult_coppersmith(basepoly, beta, t, m_lst, lll, bounds)
     return result
 
 
