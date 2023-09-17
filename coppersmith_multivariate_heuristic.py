@@ -46,7 +46,7 @@ def generate_M_with_ExtendedStrategy(basepoly, lm, t, d):
 
 
 ### multivariate coppersmith with some heuristic (jochemsz-may)
-def coppersmith_multivariate_heuristic_core(basepoly, bounds, beta, t, d, lm, maxmatsize=100):
+def coppersmith_multivariate_heuristic_core(basepoly, bounds, beta, t, d, lm, maxmatsize=100, **lllopt):
     logger.info("trying param: beta=%f, t=%d, d=%d, lm=%s", beta, t, d, str(lm))
     basepoly_vars = basepoly.parent().gens()
     n = len(basepoly_vars)
@@ -67,12 +67,12 @@ def coppersmith_multivariate_heuristic_core(basepoly, bounds, beta, t, d, lm, ma
         logger.warning("maxmatsize exceeded: %d", mat.ncols())
         return []
 
-    lll, trans = do_LLL(mat)
+    lll, trans = do_LLL(mat, **lllopt)
     result = filter_LLLresult_coppersmith(basepoly, beta, t, shiftpolys, lll, trans)
     return result
 
 
-def coppersmith_multivariate_heuristic(basepoly, bounds, beta, maxmatsize=100, maxd=8):
+def coppersmith_multivariate_heuristic(basepoly, bounds, beta, maxmatsize=100, maxd=8, **lllopt):
     if type(bounds) not in [list, tuple]:
         raise ValueError("bounds should be list or tuple")
 
@@ -102,7 +102,7 @@ def coppersmith_multivariate_heuristic(basepoly, bounds, beta, maxmatsize=100, m
         for d_diff in range(0, maxd+1):
             d = d0 + d_diff
             for lm in lms:
-                foundpols = coppersmith_multivariate_heuristic_core(basepoly, bounds, beta, t, d, lm, maxmatsize=maxmatsize)
+                foundpols = coppersmith_multivariate_heuristic_core(basepoly, bounds, beta, t, d, lm, maxmatsize=maxmatsize, **lllopt)
                 if len(foundpols) == 0:
                     continue
                 curfoundpols += foundpols

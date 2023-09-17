@@ -8,7 +8,7 @@ from logger import logger
 
 
 ### one variable coppersmith
-def coppersmith_one_var_core(basepoly, bounds, beta, t, u, delta):
+def coppersmith_one_var_core(basepoly, bounds, beta, t, u, delta, **lllopt):
     logger.info("trying param: beta=%f, t=%d, u=%d, delta=%d", beta, t, u, delta)
     basepoly_vars = basepoly.parent().gens()
     basepoly = basepoly / basepoly.monomial_coefficient(basepoly_vars[0] ** delta)
@@ -23,12 +23,12 @@ def coppersmith_one_var_core(basepoly, bounds, beta, t, u, delta):
             shiftpolys.append(shiftpoly(basepoly, t-i, i, [j]))
 
     mat = genmatrix_from_shiftpolys(shiftpolys, bounds)
-    lll, trans = do_LLL(mat)
+    lll, trans = do_LLL(mat, **lllopt)
     result = filter_LLLresult_coppersmith(basepoly, beta, t, shiftpolys, lll, trans)
     return result
 
 
-def coppersmith_onevariable(basepoly, bounds, beta, maxmatsize=100, maxu=8):
+def coppersmith_onevariable(basepoly, bounds, beta, maxmatsize=100, maxu=8, **lllopt):
     if type(bounds) not in [list, tuple]:
         bounds = [bounds]
 
@@ -62,7 +62,7 @@ def coppersmith_onevariable(basepoly, bounds, beta, maxmatsize=100, maxu=8):
             u = u0 + u_diff
             if t*delta + u > maxmatsize:
                 break
-            foundpols = coppersmith_one_var_core(basepoly, bounds, beta, t, u, delta)
+            foundpols = coppersmith_one_var_core(basepoly, bounds, beta, t, u, delta, **lllopt)
             if len(foundpols) == 0:
                 continue
 

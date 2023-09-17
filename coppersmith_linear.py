@@ -9,7 +9,7 @@ from logger import logger
 
 
 ### multivariate linear coppersmith (herrmann-may)
-def coppersmith_linear_core(basepoly, bounds, beta, t, m):
+def coppersmith_linear_core(basepoly, bounds, beta, t, m, **lllopt):
     logger.info("trying param: beta=%f, t=%d, m=%d", beta, t, m)
     basepoly_vars = basepoly.parent().gens()
     n = len(basepoly_vars)
@@ -28,12 +28,12 @@ def coppersmith_linear_core(basepoly, bounds, beta, t, m):
                     shiftpolys.append(shiftpoly(basepoly_i, k, max(t-k, 0), xi_idx))
 
     mat = genmatrix_from_shiftpolys(shiftpolys, bounds)
-    lll, trans = do_LLL(mat)
+    lll, trans = do_LLL(mat, **lllopt)
     result = filter_LLLresult_coppersmith(basepoly, beta, t, shiftpolys, lll, trans)
     return result
 
 
-def coppersmith_linear(basepoly, bounds, beta, maxmatsize=100, maxm=8):
+def coppersmith_linear(basepoly, bounds, beta, maxmatsize=100, maxm=8, **lllopt):
     if type(bounds) not in [list, tuple]:
         raise ValueError("bounds should be list or tuple")
 
@@ -82,7 +82,7 @@ def coppersmith_linear(basepoly, bounds, beta, maxmatsize=100, maxm=8):
             m = m0 + m_diff
             if binomial(n+1+m-1, m) > maxmatsize:
                 break
-            foundpols = coppersmith_linear_core(basepoly, bounds, beta, t, m)
+            foundpols = coppersmith_linear_core(basepoly, bounds, beta, t, m, **lllopt)
             if len(foundpols) == 0:
                 continue
 

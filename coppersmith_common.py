@@ -42,9 +42,15 @@ def genmatrix_from_shiftpolys(shiftpolys, bounds):
     return mat
 
 
-def do_LLL(mat):
-    #lll, trans = do_lattice_reduction(mat, algorithm=FLATTER, use_pari_kernel=True)
-    lll, trans = do_lattice_reduction(mat, algorithm=FPLLL)
+def do_LLL(mat, **lllopt):
+    if 'algorithm' not in lllopt:
+        ## FPLLL
+        lllopt['algorithm'] = FPLLL
+        ## Flatter, use_pari_kernel=True
+        #lllopt['algorithm'] = FLATTER
+        #lllopt['use_pari_kernel'] = True
+
+    lll, trans = do_lattice_reduction(mat, **lllopt)
 
     return lll, trans
 
