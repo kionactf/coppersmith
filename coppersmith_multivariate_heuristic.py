@@ -5,6 +5,7 @@ import itertools
 
 from coppersmith_common import RRh, shiftpoly, genmatrix_from_shiftpolys, do_LLL, filter_LLLresult_coppersmith
 from rootfind_ZZ import rootfind_ZZ
+from contextclass import context
 from logger import logger
 
 
@@ -46,7 +47,7 @@ def generate_M_with_ExtendedStrategy(basepoly, lm, t, d):
 
 
 ### multivariate coppersmith with some heuristic (jochemsz-may)
-def coppersmith_multivariate_heuristic_core(basepoly, bounds, beta, t, d, lm, maxmatsize=100, **lllopt):
+def coppersmith_multivariate_heuristic_core(basepoly, bounds, beta, t, d, lm, maxmatsize=100):
     logger.info("trying param: beta=%f, t=%d, d=%d, lm=%s", beta, t, d, str(lm))
     basepoly_vars = basepoly.parent().gens()
     n = len(basepoly_vars)
@@ -67,12 +68,12 @@ def coppersmith_multivariate_heuristic_core(basepoly, bounds, beta, t, d, lm, ma
         logger.warning("maxmatsize exceeded: %d", mat.ncols())
         return []
 
-    lll, _ = do_LLL(mat, **lllopt)
+    lll, _ = do_LLL(mat)
     result = filter_LLLresult_coppersmith(basepoly, beta, t, m_lst, lll, bounds)
     return result
 
 
-def coppersmith_multivariate_heuristic(basepoly, bounds, beta, maxmatsize=100, maxd=8, **lllopt):
+def coppersmith_multivariate_heuristic(basepoly, bounds, beta, maxmatsize=100, maxd=8):
     if type(bounds) not in [list, tuple]:
         raise ValueError("bounds should be list or tuple")
 
@@ -102,12 +103,12 @@ def coppersmith_multivariate_heuristic(basepoly, bounds, beta, maxmatsize=100, m
         for d_diff in range(0, maxd+1):
             d = d0 + d_diff
             for lm in lms:
-                foundpols = coppersmith_multivariate_heuristic_core(basepoly, bounds, beta, t, d, lm, maxmatsize=maxmatsize, **lllopt)
+                foundpols = coppersmith_multivariate_heuristic_core(basepoly, bounds, beta, t, d, lm, maxmatsize=maxmatsize)
                 if len(foundpols) == 0:
                     continue
                 curfoundpols += foundpols
                 curfoundpols = list(set(curfoundpols))
-                sol = rootfind_ZZ(curfoundpols, bounds)
+                sol = rootfind_ZZ(curfoundpols, bounds, **context.rootfindZZopt)
                 if sol != [] and sol is not None:
                     whole_ed = time.time()
                     logger.info("whole elapsed time: %f", whole_ed-whole_st)

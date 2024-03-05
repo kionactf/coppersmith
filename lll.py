@@ -3,6 +3,7 @@ from sage.all import *
 from typing import Tuple, List
 from subprocess import run as subprocess_run
 from re import sub as re_sub
+import os
 import time
 import traceback
 
@@ -17,10 +18,10 @@ from fpylll import IntegerMatrix, GSO, Pruning, Enumeration
 from logger import logger
 
 
-coppersmith_dir = '/home/sage/coppersmith/'
+coppersmith_dir = os.path.dirname(__file__)
 
-fplll_path = coppersmith_dir + 'fplll/fplll' # /usr/bin
-flatter_path = coppersmith_dir + 'flatter/build/bin' # /usr/bin
+fplll_path = os.path.join(coppersmith_dir, 'fplll', 'fplll') # /usr/bin
+flatter_path = os.path.join(coppersmith_dir, 'flatter', 'build', 'bin') # /usr/bin
 
 # algorithm
 FPLLL = 0
@@ -115,20 +116,29 @@ def _xgcd_list(intlst: List[int]) -> Tuple[int, List[int]]:
     return curgcd, curlst
 
 
-def do_LLL_fplll(
-        mat: matrix,
-        transformation: bool = True,
-        use_siegel: int = True, fplll_version: str = WRAPPER, early_reduction: bool = True
-    ) -> Tuple[matrix, matrix]:
+def do_LLL_fplll(mat: matrix, **kwds) -> Tuple[matrix, matrix]:
+    if 'transformation' not in kwds:
+        kwds['transformation'] = True
+    if 'use_siegel' not in kwds:
+        kwds['use_siegel'] = True
+    if 'fplll_version' not in kwds:
+        kwds['fplll_version'] = WRAPPER
+    if 'early_reduction' not in kwds:
+        kwds['early_reduction'] = True
+    transformation = kwds['transformation']
+    use_siegel = kwds['use_siegel']
+    fplll_version = kwds['fplll_version']
+    early_reduction = kwds['early_reduction']
+
     matstr = _from_sagematrix_to_fplllmatrix(mat)
     if early_reduction:
         result = subprocess_run(
-            ['./fplll', '-l', str(1-int(use_siegel)), '-m', fplll_version, '-y', '-of', 'u'],
+            [os.path.join(fplll_path, 'fplll'), '-l', str(1-int(use_siegel)), '-m', fplll_version, '-y', '-of', 'u'],
             input=matstr.encode(), cwd=fplll_path, capture_output=True
         )
     else:
         result = subprocess_run(
-            ['./fplll', '-l', str(1-int(use_siegel)), '-m', fplll_version, '-of', 'u'],
+            [os.path.join(fplll_path, 'fplll'), '-l', str(1-int(use_siegel)), '-m', fplll_version, '-of', 'u'],
             input=matstr.encode(), cwd=fplll_path, capture_output=True
         )
     if result.returncode != 0:
@@ -144,20 +154,26 @@ def do_LLL_fplll(
     return lllmat, trans
 
 
-def do_BKZ_fplll(
-        mat: matrix,
-        transformation: bool = True,
-        blocksize: int = 10, bkzautoabort: bool = True
-    ) -> Tuple[matrix, matrix]:
+def do_BKZ_fplll(mat: matrix, **kwds) -> Tuple[matrix, matrix]:
+    if 'transformation' not in kwds:
+        kwds['transformation'] = True
+    if 'blocksize' not in kwds:
+        kwds['blocksize'] = 10
+    if 'bkzautoabort' not in kwds:
+        kwds['bkzautoabort'] = True
+    transformation = kwds['transformation']
+    blocksize = kwds['blocksize']
+    bkzautoabort = kwds['bkzautoabort']
+
     matstr = _from_sagematrix_to_fplllmatrix(mat)
     if bkzautoabort:
         result = subprocess_run(
-            ['./fplll', '-a', 'bkz', '-b', str(blocksize), '-bkzautoabort', '-of', 'u'],
+            [os.path.join(fplll_path, 'fplll'), '-a', 'bkz', '-b', str(blocksize), '-bkzautoabort', '-of', 'u'],
             input=matstr.encode(), cwd=fplll_path, capture_output=True
         )
     else:
         result = subprocess_run(
-            ['./fplll', '-a', 'bkz', '-b', str(blocksize), '-of', 'u'],
+            [os.path.join(fplll_path, 'fplll'), '-a', 'bkz', '-b', str(blocksize), '-of', 'u'],
             input=matstr.encode(), cwd=fplll_path, capture_output=True
         )
     if result.returncode != 0:
@@ -173,11 +189,16 @@ def do_BKZ_fplll(
     return lllmat, trans
 
 
-def do_LLL_flatter(
-        mat: matrix,
-        transformation: bool = True,
-        use_pari_kernel: bool = True, use_pari_matsol: bool = False
-    ) -> Tuple[matrix, matrix]:
+def do_LLL_flatter(mat: matrix, **kwds) -> Tuple[matrix, matrix]:
+    if 'transformation' not in kwds:
+        kwds['transformation'] = True
+    if 'use_pari_kernel' not in kwds:
+        kwds['use_pari_kernel'] = True
+    if 'use_pari_matsol' not in kwds:
+        kwds['use_pari_matsol'] = False
+    transformation = kwds['transformation']
+    use_pari_kernel = kwds['use_pari_kernel']
+    use_pari_matsol = kwds['use_pari_matsol']
 
     kerproc_st = time.time()
 
@@ -267,7 +288,7 @@ def do_LLL_flatter(
     else:
         matstr = _from_sagematrix_to_fplllmatrix(Hsub)
         result = subprocess_run(
-            './flatter',
+            os.path.join(flatter_path, 'flatter'),
             input=matstr.encode(), cwd=flatter_path, capture_output=True
         )
         if result.returncode != 0:
@@ -296,10 +317,10 @@ def do_LLL_flatter(
     return final_lllmat, final_trans
 
 
-def do_LLL_NTL(
-        mat: matrix,
-        transformation: bool = True
-    ) -> Tuple[matrix, matrix]:
+def do_LLL_NTL(mat: matrix, **kwds) -> Tuple[matrix, matrix]:
+    if 'transformation' not in kwds:
+        kwds['transformation'] = True
+    transformation = kwds['transformation']
 
     delta_lll = ZZ(99)/ZZ(100)
     a_lll = delta_lll.numer()
@@ -319,11 +340,16 @@ def do_LLL_NTL(
     return lllmat, trans
 
 
-def do_BKZ_NTL(
-        mat: matrix,
-        transformation: bool = True,
-        blocksize: int = 10, prune: int = 0
-    ) -> Tuple[matrix, matrix]:
+def do_BKZ_NTL(mat: matrix, **kwds) -> Tuple[matrix, matrix]:
+    if 'transformation' not in kwds:
+        kwds['transformation'] = True
+    if 'blocksize' not in kwds:
+        kwds['blocksize'] = 10
+    if 'prune' not in kwds:
+        kwds['prune'] = 0
+    transformation = kwds['transformation']
+    blocksize = kwds['blocksize']
+    prune = kwds['prune']
 
     delta_lll = 0.99
     A = ntl_mat(mat)
@@ -342,7 +368,7 @@ def do_BKZ_NTL(
 
 
 ## wrapper function
-def do_lattice_reduction(mat: matrix, algorithm: int = FLATTER, **kwds) -> Tuple[matrix, matrix]:
+def do_lattice_reduction(mat: matrix, **kwds) -> Tuple[matrix, matrix]:
     """
     LLL/BKZ reduction
     input: (mat, algorithm, **kwds)
@@ -353,6 +379,10 @@ def do_lattice_reduction(mat: matrix, algorithm: int = FLATTER, **kwds) -> Tuple
             - lllmat: LLL/BKZ reduced basis matrix (might include zero-vectors)
             - trans: transformation matrix s.t. lllmat = trans * mat
     """
+    if 'algorithm' not in kwds:
+        kwds['algorithm'] = FLATTER
+    algorithm = kwds['algorithm']
+
     logger.info("size of mat for lattice reduction: (%d, %d)", int(mat.nrows()), int(mat.ncols()))
     logger.debug(
         "lattice reduction param: algorithm=%s, param=%s",
@@ -438,10 +468,10 @@ def test():
             curmat = matrix(ZZ, testlstele[1])
             try:
                 if LLL_algorithm == FLATTER:
-                    lll, trans = LLL_algorithm_dict[LLL_algorithm](curmat, use_pari_kernel=False)
+                    lll, trans = LLL_algorithm_dict[LLL_algorithm](curmat, **{'use_pari_kernel':False})
                     #lll, trans = LLL_algorithm_dict[LLL_algorithm](curmat, use_pari_kernel=True)
                 else:
-                    lll, trans = LLL_algorithm_dict[LLL_algorithm](curmat)
+                    lll, trans = LLL_algorithm_dict[LLL_algorithm](curmat, **{})
             except:
                 traceback.print_exc()
                 continue

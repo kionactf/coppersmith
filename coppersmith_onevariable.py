@@ -4,11 +4,12 @@ import time
 
 from coppersmith_common import RRh, shiftpoly, genmatrix_from_shiftpolys, do_LLL, filter_LLLresult_coppersmith
 from rootfind_ZZ import rootfind_ZZ
+from contextclass import context
 from logger import logger
 
 
 ### one variable coppersmith
-def coppersmith_one_var_core(basepoly, bounds, beta, t, u, delta, **lllopt):
+def coppersmith_one_var_core(basepoly, bounds, beta, t, u, delta):
     logger.info("trying param: beta=%f, t=%d, u=%d, delta=%d", beta, t, u, delta)
     basepoly_vars = basepoly.parent().gens()
     basepoly = basepoly / basepoly.monomial_coefficient(basepoly_vars[0] ** delta)
@@ -23,12 +24,12 @@ def coppersmith_one_var_core(basepoly, bounds, beta, t, u, delta, **lllopt):
             shiftpolys.append(shiftpoly(basepoly, t-i, i, [j]))
 
     mat, m_lst = genmatrix_from_shiftpolys(shiftpolys, bounds)
-    lll, _ = do_LLL(mat, **lllopt)
+    lll, _ = do_LLL(mat)
     result = filter_LLLresult_coppersmith(basepoly, beta, t, m_lst, lll, bounds)
     return result
 
 
-def coppersmith_onevariable(basepoly, bounds, beta, maxmatsize=100, maxu=8, **lllopt):
+def coppersmith_onevariable(basepoly, bounds, beta, maxmatsize=100, maxu=8):
     if type(bounds) not in [list, tuple]:
         bounds = [bounds]
 
@@ -62,13 +63,13 @@ def coppersmith_onevariable(basepoly, bounds, beta, maxmatsize=100, maxu=8, **ll
             u = u0 + u_diff
             if t*delta + u > maxmatsize:
                 break
-            foundpols = coppersmith_one_var_core(basepoly, bounds, beta, t, u, delta, **lllopt)
+            foundpols = coppersmith_one_var_core(basepoly, bounds, beta, t, u, delta)
             if len(foundpols) == 0:
                 continue
 
             curfoundpols += foundpols
             curfoundpols = list(set(curfoundpols))
-            sol = rootfind_ZZ(curfoundpols, bounds)
+            sol = rootfind_ZZ(curfoundpols, bounds, **context.rootfindZZopt)
             if sol != [] and sol is not None:
                 whole_ed = time.time()
                 logger.info("whole elapsed time: %f", whole_ed-whole_st)

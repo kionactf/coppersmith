@@ -2,6 +2,7 @@ from sage.all import *
 
 import time
 
+from contextclass import context
 from logger import logger
 
 from lll import do_lattice_reduction, FPLLL, FPLLL_BKZ, FLATTER, NTL, NTL_BKZ
@@ -42,18 +43,8 @@ def genmatrix_from_shiftpolys(shiftpolys, bounds):
     return mat, m_lst
 
 
-def do_LLL(mat, **lllopt):
-    # no transformation computation (mainly, for speeding up flatter)
-    lllopt['transformation'] = False
-
-    if 'algorithm' not in lllopt:
-        ## FPLLL
-        lllopt['algorithm'] = FPLLL
-        ## Flatter, use_pari_kernel=True
-        #lllopt['algorithm'] = FLATTER
-        #lllopt['use_pari_kernel'] = True
-
-    lll, trans = do_lattice_reduction(mat, **lllopt)
+def do_LLL(mat):
+    lll, trans = do_lattice_reduction(mat, **context.lllopt)
 
     return lll, trans
 

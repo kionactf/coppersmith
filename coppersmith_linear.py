@@ -5,11 +5,12 @@ import itertools
 
 from coppersmith_common import RRh, shiftpoly, genmatrix_from_shiftpolys, do_LLL, filter_LLLresult_coppersmith
 from rootfind_ZZ import rootfind_ZZ
+from contextclass import context
 from logger import logger
 
 
 ### multivariate linear coppersmith (herrmann-may)
-def coppersmith_linear_core(basepoly, bounds, beta, t, m, **lllopt):
+def coppersmith_linear_core(basepoly, bounds, beta, t, m):
     logger.info("trying param: beta=%f, t=%d, m=%d", beta, t, m)
     basepoly_vars = basepoly.parent().gens()
     n = len(basepoly_vars)
@@ -28,12 +29,12 @@ def coppersmith_linear_core(basepoly, bounds, beta, t, m, **lllopt):
                     shiftpolys.append(shiftpoly(basepoly_i, k, max(t-k, 0), xi_idx))
 
     mat, m_lst = genmatrix_from_shiftpolys(shiftpolys, bounds)
-    lll, _ = do_LLL(mat, **lllopt)
+    lll, _ = do_LLL(mat)
     result = filter_LLLresult_coppersmith(basepoly, beta, t, m_lst, lll, bounds)
     return result
 
 
-def coppersmith_linear(basepoly, bounds, beta, maxmatsize=100, maxm=8, **lllopt):
+def coppersmith_linear(basepoly, bounds, beta, maxmatsize=100, maxm=8):
     if type(bounds) not in [list, tuple]:
         raise ValueError("bounds should be list or tuple")
 
@@ -82,13 +83,13 @@ def coppersmith_linear(basepoly, bounds, beta, maxmatsize=100, maxm=8, **lllopt)
             m = m0 + m_diff
             if binomial(n+1+m-1, m) > maxmatsize:
                 break
-            foundpols = coppersmith_linear_core(basepoly, bounds, beta, t, m, **lllopt)
+            foundpols = coppersmith_linear_core(basepoly, bounds, beta, t, m)
             if len(foundpols) == 0:
                 continue
 
             curfoundpols += foundpols
             curfoundpols = list(set(curfoundpols))
-            sol = rootfind_ZZ(curfoundpols, bounds)
+            sol = rootfind_ZZ(curfoundpols, bounds, **context.rootfindZZopt)
             if sol != [] and sol is not None:
                 whole_ed = time.time()
                 logger.info("whole elapsed time: %f", whole_ed-whole_st)
