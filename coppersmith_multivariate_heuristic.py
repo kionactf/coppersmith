@@ -2,6 +2,7 @@ from sage.all import *
 
 import time
 import itertools
+import traceback
 
 from coppersmith_common import RRh, shiftpoly, genmatrix_from_shiftpolys, do_LLL, filter_LLLresult_coppersmith
 from rootfind_ZZ import rootfind_ZZ
@@ -52,8 +53,13 @@ def coppersmith_multivariate_heuristic_core(basepoly, bounds, beta, t, d, lm, ma
     basepoly_vars = basepoly.parent().gens()
     n = len(basepoly_vars)
 
-    # NOTE: for working not integral domain, write as basepoly * (1/val) (do not write as basepoly / val)
-    basepoly_i = basepoly * (1 / basepoly.monomial_coefficient(lm))
+    try:
+        # NOTE: for working not integral domain, write as basepoly * (1/val) (do not write as basepoly / val)
+        basepoly_i = basepoly * (1 / basepoly.monomial_coefficient(lm))
+    except:
+        traceback.print_exc()
+        logger.warning(f"maybe, facing an non-invertible monomial coefficient({lm}). still continuing...")
+        return []
 
     M = generate_M_with_ExtendedStrategy(basepoly_i, lm, t, d)
     shiftpolys = []

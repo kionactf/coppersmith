@@ -1,6 +1,7 @@
 from sage.all import *
 
 import time
+import traceback
 
 from coppersmith_common import RRh, shiftpoly, genmatrix_from_shiftpolys, do_LLL, filter_LLLresult_coppersmith
 from rootfind_ZZ import rootfind_ZZ
@@ -12,7 +13,12 @@ from logger import *
 def coppersmith_one_var_core(basepoly, bounds, beta, t, u, delta):
     logger.info("trying param: beta=%f, t=%d, u=%d, delta=%d", beta, t, u, delta)
     basepoly_vars = basepoly.parent().gens()
-    basepoly = basepoly / basepoly.monomial_coefficient(basepoly_vars[0] ** delta)
+    try:
+        basepoly = basepoly / basepoly.monomial_coefficient(basepoly_vars[0] ** delta)
+    except:
+        traceback.print_exc()
+        logger.warning(f"maybe, facing an non-invertible monomial coefficient. still continuing...")
+        return []
 
     shiftpolys = []
     for i in range(u-1, -1, -1):

@@ -2,6 +2,7 @@ from sage.all import *
 
 import time
 import itertools
+import traceback
 
 from coppersmith_common import RRh, shiftpoly, genmatrix_from_shiftpolys, do_LLL, filter_LLLresult_coppersmith
 from rootfind_ZZ import rootfind_ZZ
@@ -17,7 +18,14 @@ def coppersmith_linear_core(basepoly, bounds, beta, t, m):
 
     shiftpolys = []
     for i, basepoly_var in enumerate(basepoly_vars):
-        basepoly_i = basepoly / basepoly.monomial_coefficient(basepoly_var)
+        try:
+            # NOTE: for working not integral domain, write as basepoly * (1/val) (do not write as basepoly / val)
+            basepoly_i = basepoly * (1 / basepoly.monomial_coefficient(basepoly_var))
+        except:
+            traceback.print_exc()
+            logger.warning(f"maybe, facing an non-invertible monomial coefficient({basepoly_var}). still continuing...")
+            ## TODO: continue procedures with hoping some monomial coefficients for at least one variable is invertible
+            continue
 
         for k in range(m+1):
             for j in range(m-k+1):
