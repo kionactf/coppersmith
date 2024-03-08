@@ -1,5 +1,6 @@
 from rootfind_ZZ import JACOBIAN, HENSEL, TRIANGULATE, GROEBNER, LINEAR_SIMPLE, LINEAR_NEAR_BOUNDS
 from lll import do_lattice_reduction, FPLLL, FPLLL_BKZ, FLATTER, NTL, NTL_BKZ, WRAPPER, HEURISTIC
+from logger import *
 
 
 class ContextClass():

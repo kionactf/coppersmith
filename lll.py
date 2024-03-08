@@ -15,7 +15,7 @@ ntl_mat = lambda A_: sage.libs.ntl.ntl_mat_ZZ.ntl_mat_ZZ(A_.nrows(), A_.ncols(),
 
 from fpylll import IntegerMatrix, GSO, Pruning, Enumeration
 
-from logger import logger
+from logger import *
 
 
 coppersmith_dir = os.path.dirname(__file__)

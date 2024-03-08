@@ -6,7 +6,7 @@ import itertools
 from coppersmith_common import RRh, shiftpoly, genmatrix_from_shiftpolys, do_LLL, filter_LLLresult_coppersmith
 from rootfind_ZZ import rootfind_ZZ
 from contextclass import context
-from logger import logger
+from logger import *
 
 
 ### multivariate linear coppersmith (herrmann-may)

@@ -10,7 +10,7 @@ from coppersmith_onevariable import coppersmith_onevariable
 from coppersmith_linear import coppersmith_linear
 from coppersmith_multivariate_heuristic import coppersmith_multivariate_heuristic
 from lll import *
-from logger import logger
+from logger import *
 
 
 sys.set_int_max_str_digits(8000)

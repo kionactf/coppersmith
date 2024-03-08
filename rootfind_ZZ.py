@@ -5,8 +5,9 @@ from itertools import product as itertools_product
 import time
 import traceback
 
-from logger import logger
 from lll import do_lattice_reduction, FPLLL, FPLLL_BKZ, FLATTER, NTL, NTL_BKZ
+
+from logger import *
 
 
 # algorithm of rootfind for multivariate polys

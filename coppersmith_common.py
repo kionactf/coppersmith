@@ -3,7 +3,7 @@ from sage.all import *
 import time
 
 from contextclass import context
-from logger import logger
+from logger import *
 
 from lll import do_lattice_reduction, FPLLL, FPLLL_BKZ, FLATTER, NTL, NTL_BKZ
 
