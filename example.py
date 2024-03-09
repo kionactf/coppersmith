@@ -10,10 +10,14 @@ from coppersmith_onevariable import coppersmith_onevariable
 from coppersmith_linear import coppersmith_linear
 from coppersmith_multivariate_heuristic import coppersmith_multivariate_heuristic
 from lll import *
+from contextclass import context
 from logger import *
 
 
 sys.set_int_max_str_digits(8000)
+
+
+#logger.setLevel(DEBUG)
 
 
 lllopt = {}
@@ -21,9 +25,11 @@ lllopt = {}
 #lllopt = {'algorithm':FLATTER, 'use_pari_kernel':True}
 #lllopt = {'algorithm':FPLLL_BKZ, 'blocksize':3}
 
+context.lllopt = lllopt
+
 
 def example_onevariable_linear():
-    our_small_roots = lambda f, X: coppersmith_onevariable(f, [X], beta, **lllopt)
+    our_small_roots = lambda f, X: coppersmith_onevariable(f, [X], beta)
     bitsize = 2048
     while True:
         p = getPrime(bitsize//2)
@@ -63,7 +69,7 @@ def example_onevariable_linear():
 
 
 def example_twovariable_linear():
-    our_small_roots = lambda f, bounds: coppersmith_linear(f, bounds, beta, **lllopt)
+    our_small_roots = lambda f, bounds: coppersmith_linear(f, bounds, beta)
     bitsize = 2048
     while True:
         p = getPrime(bitsize//2)
@@ -100,7 +106,7 @@ def example_twovariable_linear():
 
 
 def example_threevariable_linear():
-    our_small_roots = lambda f, bounds: coppersmith_linear(f, bounds, beta, **lllopt)
+    our_small_roots = lambda f, bounds: coppersmith_linear(f, bounds, beta)
     bitsize = 2048
     while True:
         p = getPrime(bitsize//2)
@@ -169,7 +175,7 @@ def example_shortpad_attack():
     pol = pol1.resultant(pol2, x)
 
     pol_uni = pol.univariate_polynomial().change_ring(Zmod(N))
-    sol = coppersmith_onevariable(pol_uni, [2**(8*padbytelen)], 1.0, **lllopt)[0]
+    sol = coppersmith_onevariable(pol_uni, [2**(8*padbytelen)], 1.0)[0]
 
     ## Franklin-Reiter related-message attack
     pol1_uni = pol1.univariate_polynomial().change_ring(Zmod(N))
@@ -218,7 +224,7 @@ def example_chronophobia():
     f = (u1 * (10**L1down) + x)**2 - (u2 * (10**L2down) + y)
     bounds = [10**L1down, 10**L2down]
 
-    sol = coppersmith_multivariate_heuristic(f, bounds, 1.0, **lllopt)
+    sol = coppersmith_multivariate_heuristic(f, bounds, 1.0)
     print(f"result:{sol}, real:{(int(str(ans1)[L:]), int(str(ans2)[L:]))}")
 
 
@@ -260,7 +266,7 @@ def example_bivariate_stereotyped_message_attack():
     f = f_p ** e - C
 
     bounds = (2**(8*part_M_first_size), 2**(8*part_M_second_size))
-    sol = coppersmith_multivariate_heuristic(f, bounds, 1.0, **lllopt)
+    sol = coppersmith_multivariate_heuristic(f, bounds, 1.0)
 
     found_part_M_first = long_to_bytes(int(sol[0][0]))
     found_part_M_second = long_to_bytes(int(sol[0][1]))
@@ -277,7 +283,7 @@ def _example_multivariate_heuristic_1():
     monomials = [x, y, x*y, x**2, y**2]
     f = sum(randrange(N) * monomial for monomial in monomials)
     f -= f(*roots)
-    sol = coppersmith_multivariate_heuristic(f, bounds, 1.0, **lllopt)
+    sol = coppersmith_multivariate_heuristic(f, bounds, 1.0)
     print(f"result:{sol}, real:{roots}")
 
 
@@ -293,7 +299,7 @@ def _example_multivariate_heuristic_2():
     monomials = [x, y, x*y, x*z, y*z]
     f = sum(randrange(N)*monomial for monomial in monomials)
     f -= f(*roots)
-    sol = coppersmith_multivariate_heuristic(f, bounds, 1.0, **lllopt)
+    sol = coppersmith_multivariate_heuristic(f, bounds, 1.0)
     print(f"result:{sol}, real:{roots}")
 
 
