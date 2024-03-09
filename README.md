@@ -50,6 +50,40 @@ Also, you can use only `LLL `by calling lll.do_lattice_reduction with Sagemath m
 
 For `integer equations solver`, use rootfind_ZZ.rootfind_ZZ with a list of Sagemath polynomial over ZZ and bounds.
 
+## Custom Configuration
+
+(The feature was introduced on 2024/3/8.)
+
+Although we set up built-in default settings based on our some experiments, some users say the setting does not fit on their environments.
+
+So we prepares a configuration interface `context` for `lll.py` and `rootfind_ZZ.py`.
+
+You can use it by importing `context` just as the following example:
+
+```python
+from coppersmith_linear import * # including context
+from lll import FLATTER
+from rootfind_ZZ import JACOBIAN, TRIANGULATE
+
+# use flatter
+context.lllopt = {'algorithm':FLATTER, 'use_pari_kernel':True}
+# use jacobian method and triangulate in order,
+# and for jacobian method set the number of iteration(loop) as 32 (much less comparing the default value 1024)
+context.rootfindZZopt = {'algorithm':(JACOBIAN, TRIANGULATE), 'maxiternum':32}
+
+# debug output enable
+logger.setLevel(DEBUG)
+
+P = PolynomialRing(...)
+f = ...
+beta = ...
+bounds = [...]
+coppersmith_linear(f, bounds, beta)
+````
+
+You can check the list of options and their default values at `register_options_lll` and `register_options_rootfind_ZZ` at `contextclass.py`.
+
+
 ## Note (use_pari_kernel)
 
 For computing LLL, we use pari.matker for eliminating linearly dependent vectors for defining lattice. The process needs to use flatter. Though pari.matker is fast and outputs correct results in many cases, it sometimes outputs `wrong` results. (You can check this by running lll.test().) You may disable to use pari.matker by setting the option `use_pari_kernel=False`, where it forces using Sagemath kernel (which do internally run computing hermite normal form (HNF).) Note that HNF tends to produce large elements, so it causes LLL process makes super slow.
