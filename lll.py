@@ -18,10 +18,12 @@ from fpylll import IntegerMatrix, GSO, Pruning, Enumeration
 from logger import *
 
 
-coppersmith_dir = os.path.dirname(__file__)
+_coppersmith_dir = os.path.dirname(__file__)
+_fplll_path = os.path.join(_coppersmith_dir, 'fplll', 'fplll') # /usr/bin
+_flatter_path = os.path.join(_coppersmith_dir, 'flatter', 'build', 'bin') # /usr/bin
 
-fplll_path = os.path.join(coppersmith_dir, 'fplll', 'fplll') # /usr/bin
-flatter_path = os.path.join(coppersmith_dir, 'flatter', 'build', 'bin') # /usr/bin
+fplll_path = os.environ.get('COPPERSMITHFPLLLPATH', _fplll_path)
+flatter_path = os.environ.get('COPPERSMITHFLATTERPATH', _flatter_path)
 
 # algorithm
 FPLLL = 0

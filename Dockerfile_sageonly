@@ -10,18 +10,18 @@ RUN sudo apt-get install -y \
     tmux \
     netcat
 
-### for building fplll, flatter
-RUN sudo apt-get update \
-    && sudo apt-get install -y \
-    cmake \
-    libtool \
-    fplll-tools \
-    libfplll-dev \
-    libgmp-dev \
-    libmpfr-dev \
-    libeigen3-dev \
-    libblas-dev \
-    liblapack-dev
+### for building flatter
+#RUN sudo apt-get update \
+#    && sudo apt-get install -y \
+#    cmake \
+#    libtool \
+#    fplll-tools \
+#    libfplll-dev \
+#    libgmp-dev \
+#    libmpfr-dev \
+#    libeigen3-dev \
+#    libblas-dev \
+#    liblapack-dev
 
 USER sage
 
@@ -31,24 +31,26 @@ RUN sage --pip install --no-cache-dir \
     z3-solver \
     tqdm
 
-### prepare build fplll, flatter
+### prepare build flatter
 RUN mkdir /home/sage/coppersmith
 COPY --chown=sage:sage *.py /home/sage/coppersmith/
-COPY --chown=sage:sage fplll /home/sage/coppersmith/fplll/
-COPY --chown=sage:sage flatter /home/sage/coppersmith/flatter/
+#COPY --chown=sage:sage flatter /home/sage/coppersmith/flatter/
 
-### build fplll
-WORKDIR /home/sage/coppersmith/fplll
-RUN ./autogen.sh
-RUN ./configure
-RUN make -j4
 
-### build flatter
-WORKDIR /home/sage/coppersmith/flatter
-RUN mkdir build
-WORKDIR /home/sage/coppersmith/flatter/build
-RUN cmake ..
-RUN make -j4
+### install flatter (On current release, flatter are not included in Sagemath)
+#WORKDIR /home/sage/coppersmith/flatter
+#RUN mkdir build
+#WORKDIR /home/sage/coppersmith/flatter/build
+#RUN cmake ..
+#RUN make -j4
+
+#USER root
+#RUN make install
+#WORKDIR /home/sage/coppersmith
+#RUN rm -rf flatter
+#RUN apt-get remove --purge -y cmake
+#RUN apt-get autoremove --purge -y
+#USER sage
 
 
 #### other lattice library download
@@ -84,8 +86,10 @@ RUN ln -s /home/sage/collection_lattice_tools/pwn-stuff/math/solvelinmod.py /hom
 ### coppersmith package config
 WORKDIR /home/sage/
 ENV PYTHONPATH=/home/sage/coppersmith/:$PYTHONPATH
-ENV COPPERSMITHFPLLLPATH=/home/sage/coppersmith/fplll/fplll/
-ENV COPPERSMITHFLATTERPATH=/home/sage/coppersmith/flatter/build/bin/
+ENV COPPERSMITHFPLLLPATH=/home/sage/sage/local/bin/
+#ENV COPPERSMITHFLATTERPATH=/usr/local/bin/
+### change default algorithm to FPLLL instead of FLATTER
+RUN sed -i 's| = FLATTER| = FPLLL|g' /home/sage/coppersmith/lll.py
 
 
 ### follow cryptohack-docker (https://github.com/cryptohack/cryptohack-docker)
